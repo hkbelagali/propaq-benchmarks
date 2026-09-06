@@ -52,7 +52,7 @@ def latest_record(path: Path) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--results", type=Path, default=BENCH_DIR / "results" / "surrogate_optimization.npz"
+        "--results", type=Path, default=BENCH_DIR / "experiments" / "surrogate_optimization" / "results_propaq.npz"
     )
     parser.add_argument(
         "--out", type=Path,

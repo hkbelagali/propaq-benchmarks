@@ -34,7 +34,7 @@ BENCHMARK_ID = "clifford_deferral_ablation_v1"
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--results", type=Path, default=BENCH_DIR / "results" / "clifford_deferral_ablation.npz")
+    parser.add_argument("--results", type=Path, default=BENCH_DIR / "experiments" / "clifford_deferral" / "results_propaq.npz")
     parser.add_argument("--out", type=Path, default=BENCH_DIR / "results" / "plots" / "clifford_deferral__runtime_vs_t_density")
     args = parser.parse_args()
 

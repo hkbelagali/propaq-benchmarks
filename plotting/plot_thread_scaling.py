@@ -53,7 +53,7 @@ THREAD_MARKERS = {1: "o", 2: "s", 4: "^", 8: "D", 16: "v", 32: "P", 64: "X"}
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--results", type=Path, default=BENCH_DIR / "results" / "thread_scaling.npz")
+    parser.add_argument("--results", type=Path, default=BENCH_DIR / "experiments" / "propaq_thread_scaling" / "results_propaq.npz")
     parser.add_argument("--out", type=Path, default=BENCH_DIR / "results" / "plots" / "thread_scaling__runtime_vs_steps")
     args = parser.parse_args()
 

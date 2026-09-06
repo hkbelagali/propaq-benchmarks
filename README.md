@@ -1,6 +1,6 @@
 # propaq-benchmark-suite / bench
 
-Cross-package benchmark suite comparing five Heisenberg-picture (Pauli/Majorana) operator
+Cross-package benchmark suite comparing six Heisenberg-picture (Pauli/Majorana) operator
 backpropagation implementations on the same problems, with the same resources.
 
 | Package | Language | Basis | Thread control |
@@ -10,45 +10,86 @@ backpropagation implementations on the same problems, with the same resources.
 | [pyrauli](../pyrauli) | C++/Python | Pauli | `OMP_NUM_THREADS` env var + `runtime=par` |
 | [propaq](../propaq) | Rust+Python | **Pauli and Majorana** | `n_threads=` kwarg (per-instance Rayon pool) |
 | [MajoranaPropagation.jl](../MajoranaPropagation.jl) | Julia | Majorana | `julia -t N` (`VectorMajoranaSum`) |
+| [monoprop](../monoprop) | C++/Python | **Pauli and Majorana** | `monoprop_NUM_THREADS` env var |
 
-`propaq` supporting both bases on the same input circuit is what makes a same-package,
-same-input Pauli-vs-Majorana comparison possible, in addition to the cross-package ones.
+`propaq` and `monoprop` each supporting both bases on the same input circuit is what makes
+a same-package, same-input Pauli-vs-Majorana comparison possible, in addition to the
+cross-package ones.
 
 ## Directory layout
 
+Every experiment lives in its own folder under `experiments/`. Each one saves its circuits
+once, then has one `run_<backend>` file per package that loads those saved circuits and
+reports results directly. There is no orchestrator process spawning these as subprocesses,
+running `python3 run_propaq.py` (or `julia ... run_pauli_propagation_jl.jl`) is the whole
+interface.
+
 ```
 bench/
-├── orchestrate.py       main (non-scaling) suite driver, checkpointed and resumable
-├── common/              shared IR, problem generators, npz/checkpoint I/O
-│   ├── circuit_ir.py    ProblemIR: serializes a transpiled circuit + observable
-│   ├── circuit_ir.jl    Julia-side reader for the same IR
-│   ├── io_utils.py      subprocess timing, JSONL checkpoints, npz (de)serialization
-│   ├── problems_qubit.py       the 8 qubit-suite problem builders
-│   └── problems_fermionic.py   fermionic-native companion problem builders
-├── runners/              one CLI script per backend, each prints one JSON result line
-├── benchmarks/           standalone single-purpose benchmark scripts (not part of
-│                         orchestrate.py's main sweep)
-├── plotting/             matplotlib scripts, one per experiment, reading the .npz files
-├── scaling/              thread-count sweep driver
-├── trotter/              the deeper Trotter-step scan and its propaq truncation study
-├── extrapolators/        zero-noise and zero-coefficient extrapolation studies
-├── plugin/               native ABI noise-plugin benchmark (C, Rust, AOT Julia)
-├── slurm/                sbatch scripts for the SLURM-driven sweeps
-├── julia_env/            shared Julia Project.toml/Manifest.toml, both Julia
-│                         packages Pkg.develop-ed into it
-└── results/              npz snapshots, JSONL checkpoints, and plots
-    ├── *.jsonl           one experiment's checkpoint, one JSON line per completed run
-    ├── *.npz             the same data as one column-major array snapshot
-    └── plots/            every figure in the suite, flat, both .png and .pgf
+├── common/                       shared circuit IR, problem builders, checkpoint/npz helpers
+│   ├── circuit_ir.py              ProblemIR: serializes a transpiled circuit + observable
+│   ├── circuit_ir.jl               Julia-side reader for the same IR
+│   ├── experiment_runner.py       loads saved circuits and checkpoints results, used by every run_<backend>.py
+│   ├── experiment_runner.jl        the same, for the two Julia-only backends
+│   ├── io_utils.py                JSONL checkpoint + npz (de)serialization, and the plotting-side merge helper
+│   ├── problems_qubit.py           the 8 qubit-suite problem builders
+│   └── problems_fermionic.py       native-fermionic companion builders (hubbard_trotter, random_fermionic_circuit)
+├── experiments/
+│   ├── ising_trotter/              one of the 8 main problems, see the full layout below
+│   ├── random_circuit/             same file layout as ising_trotter
+│   ├── random_near_clifford/       same file layout
+│   ├── heisenberg_chain_trotter/   same file layout
+│   ├── qaoa_maxcut/                same file layout
+│   ├── ucj_h2/                     same file layout, one saved circuit instead of four
+│   ├── hubbard_trotter/            qubit-side layout plus a native-fermionic side, see below
+│   ├── random_fermionic_circuit/   qubit-side layout plus a native-fermionic side, see below
+│   ├── thread_scaling/             cross-backend thread-count sweep on two fixed circuits
+│   ├── clifford_deferral/          propaq only, Clifford deferral on vs off
+│   ├── custom_decomposition/       propaq only
+│   ├── hybrid_mps_heisenberg/      propaq only
+│   ├── hybrid_ucj_heisenberg/      propaq only
+│   ├── surrogate_optimization/     propaq only
+│   └── propaq_thread_scaling/      propaq only, Trotter step count x thread count sweep
+├── plotting/                      matplotlib scripts, one per experiment, reading its results_<backend>.npz files
+├── extrapolators/                 zero-noise and zero-coefficient extrapolation studies
+├── plugin/                        native ABI noise-plugin benchmark (C, Rust, AOT Julia)
+├── slurm/                         rebuild_native.sh, for building native extensions on a compute node
+├── julia_env/                     shared Julia Project.toml/Manifest.toml, both Julia packages Pkg.develop-ed into it
+└── results/
+    └── plots/                     every figure in the suite, flat, both .png and .pgf
 ```
 
-Every experiment's raw result data lives as a `.jsonl`/`.npz` pair next to the script that
-produced it (inside `results/` for the main sweeps, or next to the experiment's own script
-for `extrapolators/` and `plugin/`). The `.jsonl` file is the durable, appendable
-checkpoint. The `.npz` file is a snapshot of the same records rebuilt after every append,
-and is what every plotting script reads. Neither file format is generated by hand. Rerunning
-the script that produced a `.jsonl`/`.npz` pair regenerates both from scratch or resumes
-from where it left off.
+`experiments/ising_trotter/`'s full layout, which every one of the 8 main problems follows:
+
+```
+experiments/ising_trotter/
+├── generate_circuits.py            builds and saves every circuit instance, run this once
+├── circuits/                       the saved ProblemIR json files, one per size
+│   ├── 3x3_steps10.json
+│   ├── 4x4_steps12.json
+│   ├── 6x6_steps15.json
+│   └── 6x6_steps20.json
+├── run_pauli_prop.py                python3 run_pauli_prop.py, no arguments needed
+├── run_pyrauli.py
+├── run_monoprop.py
+├── run_propaq.py                    runs both the Pauli and Majorana basis
+└── run_pauli_propagation_jl.jl      julia --project=../../julia_env -t 64 run_pauli_propagation_jl.jl
+```
+
+`hubbard_trotter` and `random_fermionic_circuit` additionally have a `circuits_native/`
+folder (an independently built native-fermionic circuit, see "How a fair comparison is
+constructed" below) and extra native-only backend files: both get
+`run_majorana_propagation_jl.jl`, and `hubbard_trotter` additionally gets
+`run_propaq_native.py` and `run_monoprop_native.py` (checkpointed to
+`results_propaq_native.*`/`results_monoprop_native.*`, distinct from the qubit-side
+`run_propaq.py`/`run_monoprop.py`'s own `results_propaq.*`/`results_monoprop.*` in the same
+folder, since these are genuinely different measurements of the same nominal instance).
+
+Running any `run_<backend>` file writes `results_<backend>.jsonl` (an appendable
+checkpoint, fsynced after every circuit) and `results_<backend>.npz` (a snapshot of the
+same records, rebuilt after every circuit, which is what every plotting script reads)
+directly into that experiment's folder. Killing a run and re-running the same command
+resumes from the next circuit not already recorded with `ok=true`.
 
 ## How a fair comparison is constructed
 
@@ -56,25 +97,32 @@ from where it left off.
 basis_gates=["rz","rx","ry","rzz","cx","h"])`, once, in `common/circuit_ir.py`) onto a
 common gate basis every backend supports natively or via an exact (non-approximating)
 decomposition. The resulting gate list and observable are serialized (`common/circuit_ir.py`'s
-`ProblemIR`) and replayed identically by `pauli-prop` and `PauliPropagation.jl`, or handed to
-`propaq`/`pyrauli`'s own `from_qiskit` importer (which may further transpile into that
-package's native basis internally, which is expected and how a real user of that library
-would use it). Every qubit-suite circuit was validated end to end. Exact `Statevector`
-expectation value versus all four Pauli backends agreed to about 1e-6 or better (see git
-history for the validation runs).
+`ProblemIR`) by each experiment's `generate_circuits.py`, then replayed identically by
+`pauli-prop` and `PauliPropagation.jl`, or handed to `propaq`/`pyrauli`/`monoprop`'s own
+`from_qiskit`-style importer (which may further transpile into that package's native basis
+internally, which is expected and how a real user of that library would use it). Every
+qubit-suite circuit was validated end to end. Exact `Statevector` expectation value versus
+every Pauli backend agreed to about 1e-6 or better (see git history for the validation
+runs).
 
-`propaq`'s Majorana mode also consumes these same qubit circuits via
-`MajoranaCircuit.from_qiskit(qc, n_modes=2n)` (automatic Jordan-Wigner mapping), giving a
-same-input Pauli-vs-Majorana comparison for every qubit-suite problem.
+`propaq`'s and `monoprop`'s Majorana modes also consume these same qubit circuits via
+Jordan-Wigner mapping, giving a same-input Pauli-vs-Majorana comparison for every
+qubit-suite problem.
 
-**Fermionic-native problems** (Hubbard, random fermionic circuit) additionally get a second,
-independently constructed instance built directly from `MajoranaPropagation.jl`'s own
-fermionic gate builders (`hubbard_circ_fermionic_sites`, random `MajoranaRotation`s), with
-matching physical parameters (t, U, dt, steps / n_modes, n_gates) to the qubit-suite/JW
-version run by `propaq`-Majorana and the four Pauli backends. This is not a bit-identical
-circuit (different RNG, native fermionic gates versus JW-mapped qubit gates), but it is the
-same physical model at the same size. `MajoranaPropagation.jl` has no Qiskit bridge, so an
-exact shared IR is not possible for it. This is the closest fair comparison available.
+**Fermionic-native problems** (`hubbard_trotter`, `random_fermionic_circuit`) additionally
+get a second, independently constructed instance built directly from
+`MajoranaPropagation.jl`'s own fermionic gate builders (`hubbard_circ_fermionic_sites`,
+random `MajoranaRotation`s), with matching physical parameters (t, U, dt, steps / n_modes,
+n_gates) to the qubit-suite/JW version. This is not a bit-identical circuit (different RNG,
+native fermionic gates versus JW-mapped qubit gates), but it is the same physical model at
+the same size. `MajoranaPropagation.jl` has no Qiskit bridge, so an exact shared IR is not
+possible for it, this is the closest fair comparison available. `hubbard_trotter` goes
+further and also feeds this native instance directly to propaq (via ffsim's
+`FermionOperator`, skipping the Jordan-Wigner embedding entirely) and to monoprop, since
+going through Jordan-Wigner never gives Majorana propagation its expected term-count
+locality advantage. Both of those are checkpointed under distinct backend names
+(`propaq_native`, `monoprop_native`) so they are never confused with the same package's
+ordinary Jordan-Wigner measurement in the same folder.
 
 **Observable convention**: a single local `Z` (or `ZZ` for UCJ-H2, matching this repo's
 pre-existing `propaq/benchmarks/bench_ucj.py` convention) on or near the middle qubit for
@@ -95,7 +143,7 @@ reflect propagation cost, not observable-parsing overhead.
    NISQ/variational workload).
 6. **ucj_h2**, a unitary cluster Jastrow ansatz for H2/STO-6G, built with `ffsim`+`pyscf`.
 7. **hubbard_trotter**, a 2D Fermi-Hubbard model Trotter circuit (native to both Majorana
-   packages, and also runs on the 4 Pauli backends via JW).
+   packages, and also runs on the Pauli backends via JW).
 8. **random_fermionic_circuit**, random hopping/pairing/on-site rotations, the fermionic
    analog of problem 1.
 
@@ -104,37 +152,27 @@ Problems 3 and 6 through 8 directly answer the three examples in the original re
 4, and 5 round out the suite with a truncation-scaling probe, a non-integrable spin model,
 and a canonical NISQ ansatz.
 
-## Migration to propaq 0.1.3 (PyPI)
+## Notes on propaq 0.1.3 (PyPI)
 
 The suite runs the published `propaq==0.1.3` wheel from PyPI, not a sibling source
 checkout. Install with `pip install --user propaq==0.1.3`. It is a manylinux wheel, so
-unlike the other native backends it needs no per-node rebuild.
+unlike the other native backends it needs no per-node rebuild. `FlushSchedule` and the
+`PROPAQ_ENGINE` env var from earlier propaq versions are gone in 0.1.3, one engine now
+serves both bases with no outbox to flush, so neither appears anywhere in this suite.
 
-Four API changes had to be absorbed.
+The native noise plugin ABI `propaq` exposes (see `plugin/`) was renamed and widened in
+0.1.3. `propaq_noise_damping_factor`/`_batch` became `propaq_noise_factor`/`_batch`, which
+now also carry the basis kind, the term's raw key words, and the layer position, and a new
+optional `propaq_noise_depends` declares which of those a plugin actually reads (0 =
+weight alone, bit 0 = key, bit 1 = layer). All three `plugin/` implementations (C, Rust,
+AOT Julia) and the C shim that fronts the Julia library declare `depends = 0`, so propaq
+collapses each to one weight-indexed table, verified bit-identical against the built-in
+`UniformNoiseModel` at damping 0, 0.005, and 0.05.
 
-- **`FlushSchedule` is gone.** The engine folds duplicate terms on insert, so there is no
-  outbox to flush and `schedule=FlushSchedule(merge_max_terms=1)` has no analogue. Dropped
-  at every call site (both propaq runners, `plugin/run.py`, `extrapolators/zne.py`).
-- **`PROPAQ_ENGINE` is gone**, along with the `soa`/`monoprop` engine split. 0.1.3 has one
-  engine serving both bases. `trotter/run_trotter_scan.py`'s `--propaq-engine` sweep is
-  removed and its records are tagged plainly `propaq_pauli` / `propaq_majorana` again.
-- **The native noise plugin ABI was renamed and widened.**
-  `propaq_noise_damping_factor`/`_batch` became `propaq_noise_factor`/`_batch`, which now
-  also carry the basis kind, the term's raw key words, and the layer position, and a new
-  optional `propaq_noise_depends` declares which of those a plugin actually reads (0 =
-  weight alone, bit 0 = key, bit 1 = layer). All three `plugin/` implementations (C, Rust,
-  AOT Julia) and the C shim that fronts the Julia library are ported. Each declares
-  `depends = 0`, so propaq collapses it to one weight-indexed table. Verified bit-identical
-  against the built-in `UniformNoiseModel` at damping 0, 0.005, and 0.05.
-- **Truncated results move slightly.** 0.1.3 gates a term when it is emitted, where the old
-  engine created it and swept afterward, and an observable's own terms now face the cutoff
-  before the first gate rather than after it. Expectation values from an untruncated run
-  are unchanged. A truncated run can differ in the last few digits, which is expected.
-
-`MonoProp` and `pyrauli` both compile with `-march=native` and must be built on the node
+`monoprop` and `pyrauli` both compile with `-march=native` and must be built on the node
 that runs them (`monoprop`'s flag is `monoprop_ENABLE_ARCH_FLAGS`, on by default). A build
-from the zen4 dev node dies with `SIGILL` on a zen2 compute node. MonoProp also needs the
-`Boost/1.88.0-GCC-14.3.0` module to configure.
+from a dev node with different CPU features than the compute node dies with `SIGILL`
+there. `monoprop` also needs the `Boost/1.88.0-GCC-14.3.0` module to configure.
 
 ## Known upstream issues found and worked around
 
@@ -142,111 +180,83 @@ from the zen4 dev node dies with `SIGILL` on a zen2 compute node. MonoProp also 
   `Observable` string convention is big-endian (leftmost char = qubit 0), the opposite of
   Qiskit's little-endian convention, and `from_qiskit` does not correct for this by
   default. Confirmed empirically. Without it, expectation values are silently wrong
-  (exactly 0 for entangled circuits, sign-flipped for product states). Handled in
-  `runners/run_pyrauli.py`.
+  (exactly 0 for entangled circuits, sign-flipped for product states). Handled in every
+  experiment's `run_pyrauli.py`.
 - **MajoranaPropagation.jl v0.3.0**: `propagate()` on any `AbstractMajoranaSum` (both
   `MajoranaSum` and `VectorMajoranaSum`) crashes with `UndefVarError`. It calls three
   `PauliPropagation.PathProperties` internal helpers
   (`_check_wrapping_into_paulifreqtracker`, `_checkfreqandsinfields`,
   `_check_unwrap_from_paulifreqtracker`) as bare names, but only imports
   PauliPropagation's exported names. `VectorMajoranaSum` is also missing a `coefftype`
-  method entirely. Both patched at the top of `runners/run_majorana_propagation.jl`
+  method entirely. Both patched at the top of every `run_majorana_propagation_jl.jl`
   (documented inline there) rather than upstream.
 - **pauli-prop**: `propagate_through_circuit`'s docstring says `max_terms=None` disables
   the term-count cap, but the implementation (`propagation.py`'s `if max_terms < 1:` check)
-  crashes with `TypeError` on `None` instead. Worked around in `orchestrate.py` by passing
-  a large finite cap (`PAULI_PROP_MAX_TERMS = 2_000_000_000`) instead of `None`, chosen
-  high enough to never actually bind (confirmed a larger cap costs nothing on small
-  circuits, no buffer pre-allocates to its size). This matches pauli-prop's truncation to
-  the other four backends' (coeff-cutoff only).
+  crashes with `TypeError` on `None` instead. Worked around in every `run_pauli_prop.py` by
+  passing a large finite cap (`MAX_TERMS = 2_000_000_000`) instead of `None`, chosen high
+  enough to never actually bind (confirmed a larger cap costs nothing on small circuits, no
+  buffer pre-allocates to its size). This matches pauli-prop's truncation to every other
+  backend's (coefficient-cutoff only).
 
-## Running
+## Running one experiment
 
-### Quick smoke test (few seconds per backend, run anywhere)
+Every experiment folder is self-contained. From the repo root:
 
 ```bash
+cd experiments/ising_trotter
+python3 generate_circuits.py       # builds and saves every circuit instance, run once
+python3 run_pauli_prop.py          # or run_pyrauli.py, run_monoprop.py, run_propaq.py
 module load Julia/1.11.3-linux-x86_64
-python3 orchestrate.py --quick --checkpoint results/quick.jsonl --out results/quick.npz
-python3 scaling/run_scaling.py --quick --checkpoint results/quick_scaling.jsonl --out results/quick_scaling.npz
+julia --project=../../julia_env -t 64 run_pauli_propagation_jl.jl
 ```
 
-### Full run on a compute node (checkpointed, resumable)
+No CLI flags for the common case, no orchestrator, no subprocess dispatch across backends.
+Each `run_<backend>` file loads every saved circuit in `circuits/` (and `circuits_native/`
+where present), runs that one package, and writes `results_<backend>.jsonl` and
+`results_<backend>.npz` right there in the folder, resumable as described above.
 
-Both drivers are safe to kill and re-run at any point (for example a SLURM walltime
-limit). Every completed `(problem, backend[, n_threads])` task is fsync'd to a JSONL
-checkpoint file the moment it finishes, and the `.npz` snapshot is regenerated after every
-task. Re-running the exact same command skips everything already recorded in the
-checkpoint and continues from the next incomplete task. To force a redo, delete the
-relevant line(s) from the checkpoint (or the whole file to start over).
+pyrauli needs `OMP_NUM_THREADS` set before its process starts, since OpenMP reads it once
+at the first parallel region. `experiments/thread_scaling/run_pyrauli.py`, the one
+experiment that sweeps thread count, re-executes itself once per thread count with that
+env var set for the child process. This is the only subprocess use left anywhere in this
+suite, everything else runs the whole comparison in one process.
+
+The two Julia-only backends (PauliPropagation.jl on the qubit side, MajoranaPropagation.jl
+on the native-fermionic side) fix their thread count at process launch (`julia -t N`), so
+in `experiments/thread_scaling/` they record one row per invocation instead of sweeping
+in-process. Run `run_pauli_propagation_jl.jl` (or `run_majorana_propagation_jl.jl`) once
+per thread count you want a point for, each invocation appends its own row.
+
+## Plotting
 
 ```bash
-sbatch slurm/run_main_suite.sbatch       # edit --partition/--account/--time first
-sbatch slurm/run_scaling_suite.sbatch    # needs --cpus-per-task >= 32 (max of THREAD_SWEEP)
+python3 plotting/plot_runtime_comparison.py
+python3 plotting/plot_scaling.py
 ```
 
-If a job hits its time limit, just `sbatch` the same script again (or rely on
-`--requeue`). Before submitting for real, run the sanity-check block at the top of each
-`.sbatch` file's imports (already included) to confirm `pauli_prop`/`propaq`/`pyrauli`
-import correctly on the compute node. These were built with `maturin` against this
-specific Python environment, and `MajoranaPropagation.jl`/`PauliPropagation.jl` were
-`Pkg.develop`-ed into `julia_env/` from the local checkouts in this repo, so both should
-already be usable anywhere the same home/scratch filesystem is mounted.
+Each plotting script reads the relevant experiment folders directly
+(`common/io_utils.py`'s `load_experiment_results` merges every `results_<backend>.*` file
+in a folder into one list) and produces, per problem family, a grouped-bar chart of
+propagation wall time and peak RSS (log scale, small multiples across problem sizes), plus
+a dedicated line chart for the `random_near_clifford` T-density sweep and a terms-vs-time
+scatter across every run. `plotting/plot_scaling.py` reads `experiments/thread_scaling/`
+for the cross-backend wall-time-and-speedup-vs-thread-count charts. Every other experiment
+folder has its own matching `plotting/plot_<name>.py`.
 
-### Plotting
-
-```bash
-python3 plotting/plot_runtime_comparison.py --results results/main_suite.npz
-python3 plotting/plot_scaling.py --results results/scaling_suite.npz
-```
-
-PNGs land in `results/plots/`, per-problem-family runtime and peak-RSS bar charts (log
-scale, small multiples across problem sizes), a runtime-vs-non-Cliffordness sweep, a
-terms-vs-time scatter across every run, and per-scaling-instance wall-time and
-speedup-vs-thread line charts.
-
-`results/plots/` is the single output directory for every figure in the suite, flat, with
-no per-experiment subdirectories. Result data (`.npz`, `.jsonl`, `.csv`) stays where it
-was, next to the experiment that produced it.
-
-### Standalone benchmarks
-
-`benchmarks/` holds single-purpose scripts that are not part of `orchestrate.py`'s main
-sweep, each with its own checkpoint/npz pair in `results/` and its own plotting script in
-`plotting/`.
-
-```bash
-python3 benchmarks/benchmark_clifford_deferral.py
-python3 plotting/plot_clifford_deferral.py
-
-python3 benchmarks/benchmark_custom_decomposition.py
-python3 plotting/plot_custom_decomposition.py
-
-python3 benchmarks/benchmark_hybrid_mps_heisenberg.py
-python3 plotting/plot_hybrid_mps_heisenberg.py
-
-python3 benchmarks/benchmark_hybrid_ucj_heisenberg.py
-
-python3 benchmarks/benchmark_surrogate_optimization.py
-python3 plotting/plot_surrogate_optimization.py
-
-python3 benchmarks/benchmark_thread_scaling.py
-python3 plotting/plot_thread_scaling.py
-```
-
-`benchmark_hybrid_ucj_heisenberg.py` has no plotting script yet, only its checkpoint and
-npz output.
-
-Each of these is also a checkpoint. Every result is fsynced immediately, and a repeat of
-the same command skips already-completed configurations.
+PNGs and PGFs land in `results/plots/`, the single output directory for every figure in the
+suite, flat, with no per-experiment subdirectories. Result data
+(`results_<backend>.{jsonl,npz}`) stays in the experiment folder that produced it.
 
 ## Resource budget
 
-Default truncation is identical across all five backends, `min_abs_coeff=1e-6` is the only
-real cutoff (terms below this magnitude are dropped), and there is no weight cutoff. Term
-count is otherwise unbounded everywhere. pauli-prop's `max_terms` is set to 2,000,000,000
-purely as a required non-`None` placeholder (see "Known upstream issues" above), high
-enough to never actually bind. Problem sizes were chosen so the heaviest single run lands
-in the tens-of-seconds-to-minutes range on a dedicated allocation. See
-`slurm/run_main_suite.sbatch` (`--cpus-per-task=64`, matching `orchestrate.py`'s
-`--n-threads` default) and submit via `sbatch`, not on a shared login node, since per-task
-wall time is sensitive to contention from other users' jobs.
+Default truncation is identical across every backend that has a coefficient-cutoff knob,
+`min_abs_coeff=1e-6` is the only real cutoff (terms below this magnitude are dropped), and
+there is no weight cutoff. Term count is otherwise unbounded everywhere. pauli-prop's
+`max_terms` is set to 2,000,000,000 purely as a required non-`None` placeholder (see
+"Known upstream issues" above), high enough to never actually bind. Problem sizes were
+chosen so the heaviest single run lands in the tens-of-seconds-to-minutes range on a
+dedicated machine, not a shared login node, since per-run wall time is sensitive to
+contention from other users' processes. `propaq`'s and `monoprop`'s runners default to
+`n_threads=64` (or the equivalent env var), matching the core count this suite was
+developed on, edit that constant at the top of a `run_<backend>.py` file to match a
+different machine.

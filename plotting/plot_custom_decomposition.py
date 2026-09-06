@@ -33,7 +33,7 @@ BENCHMARK_ID = "exchange_custom_decomposition_v2_10q"
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--results", type=Path, default=BENCH_DIR / "results" / "custom_decomposition.npz")
+    parser.add_argument("--results", type=Path, default=BENCH_DIR / "experiments" / "custom_decomposition" / "results_propaq.npz")
     parser.add_argument("--out", type=Path, default=BENCH_DIR / "results" / "plots" / "custom_decomposition__runtime_vs_layers")
     args = parser.parse_args()
     records = load_records_npz(str(args.results))

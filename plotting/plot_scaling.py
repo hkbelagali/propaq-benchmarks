@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""Reads results/scaling_suite.npz and produces, per scaling problem instance:
+"""Reads experiments/thread_scaling/ and produces, per problem instance:
   - wall time vs. thread count (log-log), one line per backend, pauli-prop shown as a flat
     dashed single-threaded reference.
   - speedup vs. thread count (relative to each backend's own n_threads=1 run), with an ideal
     (y=x) linear-scaling reference line.
 
-Usage: python3 plotting/plot_scaling.py [--results results/scaling_suite.npz] [--outdir results/plots]
+Grouping by "problem" rather than "label" is what puts the qubit-side (Jordan-Wigner)
+hubbard_qubit run and the native-fermionic hubbard_native run (both tagged
+problem="hubbard_trotter") on the same figure, since they describe the same nominal
+instance measured two different ways.
+
+Usage: python3 plotting/plot_scaling.py [--outdir results/plots]
 """
 from __future__ import annotations
 
@@ -30,24 +35,16 @@ import numpy as np
 
 BENCH_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BENCH_DIR))
-from common.io_utils import load_records_npz  # noqa: E402
+from common.io_utils import load_experiment_results  # noqa: E402
 from plotting.style import style_of, setup_axes, series_key  # noqa: E402
 
-import scienceplots 
+import scienceplots
 
 plt.style.use(["science", "grid"])
 
 
-def _base_uid(uid: str) -> str:
-    """Folds a "..._native(...)" uid (MajoranaPropagation.jl's native-fermionic scaling
-    instance) back onto its matching qubit/JW-side uid, so both land in one plot instead of
-    MajoranaPropagation.jl getting a figure of its own.
-    """
-    return uid.replace("_native(", "(")
-
-
-def plot_instance(records, uid: str, outdir: Path) -> None:
-    recs = [r for r in records if _base_uid(r["problem_uid"]) == uid and r.get("wall_time_s") is not None]
+def plot_instance(records, problem: str, outdir: Path) -> None:
+    recs = [r for r in records if r["problem"] == problem and r.get("wall_time_s") is not None]
     if not recs:
         return
     by_backend = collections.defaultdict(list)
@@ -89,27 +86,26 @@ def plot_instance(records, uid: str, outdir: Path) -> None:
     ax2.set_title("Speedup vs. thread count")
     ax1.legend(frameon=False, fontsize=8)
     ax2.legend(frameon=False, fontsize=8)
-    fig.suptitle(uid, fontsize=12)
+    fig.suptitle(problem, fontsize=12)
     fig.tight_layout()
-    safe_uid = uid.replace("/", "-").replace(" ", "")
-    fig.savefig(outdir / f"scaling__{safe_uid}.png", bbox_inches="tight")
+    fig.savefig(outdir / f"scaling__{problem}.png", bbox_inches="tight")
     plt.close(fig)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--results", default=str(BENCH_DIR / "results" / "scaling_suite.npz"))
+    ap.add_argument("--experiment", default=str(BENCH_DIR / "experiments" / "thread_scaling"))
     ap.add_argument("--outdir", default=str(BENCH_DIR / "results" / "plots"))
     args = ap.parse_args()
 
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    records = [r for r in load_records_npz(args.results) if r.get("ok")]
-    uids = sorted({_base_uid(r["problem_uid"]) for r in records})
-    for uid in uids:
-        plot_instance(records, uid, outdir)
-    print(f"Wrote {len(uids)} scaling plots to {outdir}")
+    records = [r for r in load_experiment_results(args.experiment) if r.get("ok")]
+    problems = sorted({r["problem"] for r in records})
+    for problem in problems:
+        plot_instance(records, problem, outdir)
+    print(f"Wrote {len(problems)} scaling plots to {outdir}")
 
 
 if __name__ == "__main__":

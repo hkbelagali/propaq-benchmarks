@@ -243,7 +243,7 @@ def ucj_h2_problem(bond_length: float = 0.74, n_reps: int = 1, seed: int = 0) ->
 # so `canonicalize()` transpiles it into COMMON_BASIS exactly like the UCJ-H2 circuit above.
 # Qubits 0..n_sites-1 are spin-up orbitals, n_sites..2*n_sites-1 are spin-down orbitals.
 # This is the qubit-suite twin of the native fermionic `hubbard_trotter` problem that
-# MajoranaPropagation.jl builds directly (see runners/run_majorana_propagation.jl) with
+# MajoranaPropagation.jl builds directly (see experiments/hubbard_trotter/run_majorana_propagation_jl.jl) with
 # matching t, U, dt, steps parameters, i.e. the same physical model, package-native construction.
 # --------------------------------------------------------------------------------------
 def hubbard_trotter_problem(
@@ -286,7 +286,7 @@ def hubbard_trotter_problem(
 # P8. Random fermionic circuit: random hopping (XXPlusYY) + random on-site phase (CPhase)
 # rotations at random angles, the JW/qubit-gate analog of a random Majorana-rotation circuit
 # (fermionic counterpart of P1). MajoranaPropagation.jl gets a matched-size native version
-# built directly from random MajoranaRotations (see runners/run_majorana_propagation.jl).
+# built directly from random MajoranaRotations (see experiments/random_fermionic_circuit/run_majorana_propagation_jl.jl).
 # --------------------------------------------------------------------------------------
 def random_fermionic_circuit_problem(n_modes: int = 12, n_gates: int = 40, seed: int = 0) -> ProblemIR:
     from qiskit.circuit.library import XXPlusYYGate

@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Reads results/main_suite.npz and produces, per problem family:
+"""Reads every main-problem experiment folder and produces, per problem family:
   - a grouped-bar chart of propagation wall time (log scale) across backends, one panel per
     problem size (small multiples instead of a second axis).
   - a matching peak-RSS memory chart.
 Plus a dedicated line chart for the random_near_clifford T-density sweep, and a scatter of
 final term count vs wall time across everything, colored by backend.
 
-Usage: python3 plotting/plot_runtime_comparison.py [--results results/main_suite.npz] [--outdir results/plots]
+A qubit-side (Jordan-Wigner) circuit and its native-fermionic companion (hubbard_trotter,
+random_fermionic_circuit) share the same "label" string for the same nominal size, since
+their generate_circuits.py scripts save both sides under matching filenames, so grouping by
+"label" already puts them in the same panel without any special-casing here.
+
+Usage: python3 plotting/plot_runtime_comparison.py [--outdir results/plots]
 """
 from __future__ import annotations
 
@@ -31,31 +36,28 @@ import numpy as np
 
 BENCH_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BENCH_DIR))
-from common.io_utils import load_records_npz  # noqa: E402
+from common.io_utils import load_experiment_results  # noqa: E402
 from plotting.style import style_of, setup_axes, series_key, SERIES  # noqa: E402
 
-import scienceplots 
+import scienceplots
 
 plt.style.use(["science", "grid"])
 
+PROBLEMS = [
+    "random_circuit", "random_near_clifford", "ising_trotter", "heisenberg_chain_trotter",
+    "qaoa_maxcut", "ucj_h2", "hubbard_trotter", "random_fermionic_circuit",
+]
+
+
 def _ok(records):
     return [r for r in records if r.get("ok")]
-
-
-def _base_size_label(size_label: str) -> str:
-    """Strips the "(native)" suffix so a MajoranaPropagation.jl-only native-fermionic run
-    lands in the same panel as its matching qubit-suite size, instead of getting a panel
-    of its own.
-    """
-    suffix = "(native)"
-    return size_label[: -len(suffix)] if size_label.endswith(suffix) else size_label
 
 
 def plot_family_bars(records, problem: str, outdir: Path) -> None:
     recs = [r for r in records if r["problem"] == problem]
     if not recs:
         return
-    sizes = sorted({_base_size_label(r["size_label"]) for r in recs}, key=lambda s: (len(s), s))
+    sizes = sorted({r["label"] for r in recs}, key=lambda s: (len(s), s))
     backends = sorted({series_key(r["backend"], r["basis"]) for r in recs},
                        key=lambda k: list(SERIES.keys()).index(k) if k in SERIES else 99)
 
@@ -68,7 +70,7 @@ def plot_family_bars(records, problem: str, outdir: Path) -> None:
         axes = axes[0]
         for ax, size in zip(axes, sizes):
             setup_axes(ax)
-            size_recs = [r for r in recs if _base_size_label(r["size_label"]) == size]
+            size_recs = [r for r in recs if r["label"] == size]
             by_key = {series_key(r["backend"], r["basis"]): r for r in size_recs}
             xs, heights, colors, labels = [], [], [], []
             for i, key in enumerate(backends):
@@ -145,16 +147,20 @@ def plot_terms_vs_time(records, outdir: Path) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--results", default=str(BENCH_DIR / "results" / "main_suite.npz"))
+    ap.add_argument("--experiments-dir", default=str(BENCH_DIR / "experiments"))
     ap.add_argument("--outdir", default=str(BENCH_DIR / "results" / "plots"))
     args = ap.parse_args()
 
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
+    experiments_dir = Path(args.experiments_dir)
 
-    records = _ok(load_records_npz(args.results))
-    problems = sorted({r["problem"] for r in records} - {"random_near_clifford"})
-    for problem in problems:
+    records = []
+    for problem in PROBLEMS:
+        records.extend(load_experiment_results(experiments_dir / problem))
+    records = _ok(records)
+
+    for problem in sorted(set(PROBLEMS) - {"random_near_clifford"}):
         plot_family_bars(records, problem, outdir)
     plot_near_clifford_sweep(records, outdir)
     plot_terms_vs_time(records, outdir)
