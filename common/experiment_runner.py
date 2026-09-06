@@ -18,6 +18,7 @@ wrapper at all.
 """
 from __future__ import annotations
 
+import re
 import resource
 import time
 from pathlib import Path
@@ -29,10 +30,25 @@ from common import io_utils
 from common.circuit_ir import ProblemIR
 
 
+def _natural_sort_key(path: Path) -> list[Any]:
+    """Splits a filename into text/number chunks so e.g. steps2 sorts before steps10.
+
+    Plain alphabetical sort puts steps10 before steps2, which processes a fine step curve
+    out of numeric order and makes a partial (killed or still-running) run's progress
+    confusing to read. This has no effect on the final results once a run completes, only
+    on the order circuits are visited in.
+    """
+    return [int(chunk) if chunk.isdigit() else chunk for chunk in re.split(r"(\d+)", path.stem)]
+
+
+def _sorted_circuit_paths(circuits_dir: Path) -> list[Path]:
+    return sorted(circuits_dir.glob("*.json"), key=_natural_sort_key)
+
+
 def load_circuits(circuits_dir: str | Path) -> list[tuple[str, ProblemIR]]:
-    """Load every saved circuit in circuits_dir, sorted by filename, as (label, ir) pairs."""
+    """Load every saved circuit in circuits_dir, in natural filename order, as (label, ir) pairs."""
     circuits_dir = Path(circuits_dir)
-    return [(path.stem, ProblemIR.load(str(path))) for path in sorted(circuits_dir.glob("*.json"))]
+    return [(path.stem, ProblemIR.load(str(path))) for path in _sorted_circuit_paths(circuits_dir)]
 
 
 def load_fermionic_circuits(circuits_dir: str | Path) -> list[tuple[str, dict[str, Any]]]:
@@ -44,7 +60,7 @@ def load_fermionic_circuits(circuits_dir: str | Path) -> list[tuple[str, dict[st
     circuit and observable directly from these physical parameters)."""
     circuits_dir = Path(circuits_dir)
     out = []
-    for path in sorted(circuits_dir.glob("*.json")):
+    for path in _sorted_circuit_paths(circuits_dir):
         with open(path) as f:
             out.append((path.stem, json.load(f)))
     return out

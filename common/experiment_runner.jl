@@ -12,8 +12,18 @@ using JSON3
 
 export run_on_saved_circuits
 
+function _natural_sort_key(path::AbstractString)
+    # Zero-pads every run of digits to a fixed width so plain string comparison already
+    # puts steps2 before steps10. Plain alphabetical sort on the unpadded name puts steps10
+    # before steps2, which processes a fine step curve out of numeric order and makes a
+    # partial run's progress confusing to read.
+    stem = splitext(basename(path))[1]
+    return replace(stem, r"\d+" => (m -> lpad(m, 10, '0')))
+end
+
 function circuit_paths(circuits_dir::AbstractString)
-    sort(filter(p -> endswith(p, ".json"), readdir(circuits_dir; join=true)))
+    paths = filter(p -> endswith(p, ".json"), readdir(circuits_dir; join=true))
+    sort(paths; by=_natural_sort_key)
 end
 
 """

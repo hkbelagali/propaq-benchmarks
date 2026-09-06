@@ -65,16 +65,25 @@ bench/
 experiments/ising_trotter/
 ├── generate_circuits.py            builds and saves every circuit instance, run this once
 ├── circuits/                       the saved ProblemIR json files, one per size
-│   ├── 3x3_steps10.json
-│   ├── 4x4_steps12.json
-│   ├── 6x6_steps15.json
-│   └── 6x6_steps20.json
+│   ├── 3x3_steps10.json             a warm-up size
+│   ├── 4x4_steps12.json             a second warm-up size
+│   └── 6x6_steps1.json .. 6x6_steps25.json   a fine Trotter-step curve, one circuit per step
 ├── run_pauli_prop.py                python3 run_pauli_prop.py, no arguments needed
 ├── run_pyrauli.py
 ├── run_monoprop.py
 ├── run_propaq.py                    runs both the Pauli and Majorana basis
 └── run_pauli_propagation_jl.jl      julia --project=../../julia_env -t 64 run_pauli_propagation_jl.jl
 ```
+
+`ising_trotter` and `hubbard_trotter` each save a fine Trotter-step curve (one circuit per
+step count from 1 to 25, at a fixed lattice size) alongside their small discrete sizes,
+since `plotting/plot_trotter_scan.py` and `plotting/plot_trotter_memory.py` plot runtime and
+peak RSS against Trotter step, not against problem size. `hubbard_trotter`'s fine curve is
+native-fermionic only (`circuits_native/`, not `circuits/`), since its qubit/Jordan-Wigner
+side blows up several steps sooner than the native side and cannot reach as deep. Running
+the slowest backend across the full 25-step curve at 6x6 takes a while, each step count is
+an independent from-scratch circuit build and propagation run, not a single run
+instrumented with mid-circuit checkpoints, so cost grows like steps squared overall.
 
 `hubbard_trotter` and `random_fermionic_circuit` additionally have a `circuits_native/`
 folder (an independently built native-fermionic circuit, see "How a fair comparison is
@@ -232,6 +241,8 @@ per thread count you want a point for, each invocation appends its own row.
 ```bash
 python3 plotting/plot_runtime_comparison.py
 python3 plotting/plot_scaling.py
+python3 plotting/plot_trotter_scan.py
+python3 plotting/plot_trotter_memory.py
 ```
 
 Each plotting script reads the relevant experiment folders directly
@@ -240,8 +251,11 @@ in a folder into one list) and produces, per problem family, a grouped-bar chart
 propagation wall time and peak RSS (log scale, small multiples across problem sizes), plus
 a dedicated line chart for the `random_near_clifford` T-density sweep and a terms-vs-time
 scatter across every run. `plotting/plot_scaling.py` reads `experiments/thread_scaling/`
-for the cross-backend wall-time-and-speedup-vs-thread-count charts. Every other experiment
-folder has its own matching `plotting/plot_<name>.py`.
+for the cross-backend wall-time-and-speedup-vs-thread-count charts. `plot_trotter_scan.py`
+and `plot_trotter_memory.py` read `experiments/ising_trotter/` and
+`experiments/hubbard_trotter/`'s fine step curves for runtime-vs-step and peak-RSS-vs-step
+line charts, one figure per lattice size, with a term-count inset on the runtime figure.
+Every other experiment folder has its own matching `plotting/plot_<name>.py`.
 
 PNGs and PGFs land in `results/plots/`, the single output directory for every figure in the
 suite, flat, with no per-experiment subdirectories. Result data
