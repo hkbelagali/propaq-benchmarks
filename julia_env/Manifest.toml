@@ -2,7 +2,7 @@
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "5a3f5df1199c06892e9feeab360ddfc22fe98d25"
+project_hash = "856fcfa2d49a14f6a66379f47f351158518fcd45"
 
 [[deps.AcceleratedKernels]]
 deps = ["ArgCheck", "GPUArraysCore", "KernelAbstractions", "Markdown", "UnsafeAtomics"]
@@ -78,6 +78,12 @@ version = "2.2.0"
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
+
+[[deps.BenchCommon]]
+deps = ["JSON3", "PauliPropagation"]
+path = "../propaq-benchmarks/julia/BenchCommon"
+uuid = "76005f04-6934-4268-acce-645816235ed3"
+version = "0.1.0"
 
 [[deps.BenchmarkTools]]
 deps = ["Compat", "JSON", "Logging", "PrecompileTools", "Printf", "Profile", "Statistics", "UUIDs"]

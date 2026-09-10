@@ -18,8 +18,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import io_utils  # noqa: E402
-from common.circuit_ir import ProblemIR  # noqa: E402
+from propaq_benchmarks import io_utils  # noqa: E402
+from propaq_benchmarks.circuit_ir import ProblemIR  # noqa: E402
 
 PACKAGE_ROOT = HERE.parents[2] / "propaq"
 if str(PACKAGE_ROOT) not in sys.path:

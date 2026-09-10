@@ -9,7 +9,7 @@ Each size builds both the qubit-suite circuit (Jordan-Wigner mapped, saved to ci
 the native-fermionic circuit (saved to circuits_native/) under the same label, so the two
 trees describe the same nominal problem size even though the two saved circuits are not
 bit-identical (different RNG, native fermionic gates vs JW-mapped qubit gates, by design, see
-common/problems_fermionic.py's module docstring).
+propaq_benchmarks/problems_fermionic.py's module docstring).
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import problems_fermionic, problems_qubit  # noqa: E402
+from propaq_benchmarks import problems_fermionic, problems_qubit  # noqa: E402
 
 # (n_modes, n_gates) pairs, shared by both the qubit-suite and native-fermionic builders.
 SIZES = [(8, 20), (14, 40), (18, 60), (20, 80)]

@@ -20,8 +20,8 @@ os.environ.setdefault("MKL_NUM_THREADS", "1")
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common.circuit_ir import ProblemIR  # noqa: E402
-from common.experiment_runner import run_on_saved_circuits  # noqa: E402
+from propaq_benchmarks.circuit_ir import ProblemIR  # noqa: E402
+from propaq_benchmarks.experiment_runner import run_on_saved_circuits  # noqa: E402
 
 warnings.simplefilter("ignore")  # propaq's transpile-fallback UserWarnings go to stderr
 

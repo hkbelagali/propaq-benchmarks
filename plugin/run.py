@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent
 BENCH_DIR = ROOT.parent
 sys.path.insert(0, str(BENCH_DIR))
 
-from common import io_utils  # noqa: E402
+from propaq_benchmarks import io_utils  # noqa: E402
 
 BUILD = ROOT / "build"
 RESULTS = ROOT / "results"

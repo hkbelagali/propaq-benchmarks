@@ -16,8 +16,7 @@ using PauliPropagation
 using JSON3
 
 HERE = @__DIR__
-include(joinpath(HERE, "..", "..", "common", "circuit_ir.jl"))
-using .CircuitIR
+using BenchCommon: CircuitIR
 
 const MIN_ABS_COEFF = 1e-6
 

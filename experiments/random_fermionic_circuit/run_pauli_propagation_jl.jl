@@ -11,10 +11,7 @@ using PauliPropagation
 using JSON3
 
 HERE = @__DIR__
-include(joinpath(HERE, "..", "..", "common", "circuit_ir.jl"))
-include(joinpath(HERE, "..", "..", "common", "experiment_runner.jl"))
-using .CircuitIR
-using .ExperimentRunner
+using BenchCommon: CircuitIR, ExperimentRunner
 
 const MIN_ABS_COEFF = 1e-6
 

@@ -1,0 +1,8 @@
+name = "BenchCommon"
+uuid = "76005f04-6934-4268-acce-645816235ed3"
+authors = ["propaq-benchmark-suite"]
+version = "0.1.0"
+
+[deps]
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+PauliPropagation = "293282d5-3c99-4fb6-92d0-fd3280a19750"

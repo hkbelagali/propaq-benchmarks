@@ -13,7 +13,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import problems_qubit  # noqa: E402
+from propaq_benchmarks import problems_qubit  # noqa: E402
 
 # (n_qubits, p): a small warm-up size growing to a 36-qubit random 3-regular graph, with the
 # QAOA layer count p grown alongside the graph size so circuit depth keeps scaling too.

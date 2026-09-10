@@ -3,13 +3,13 @@
 # random_fermionic_circuit instance in circuits_native/.
 #
 # Unlike the qubit-suite backends, this package has no Qiskit bridge, so it consumes the small
-# *parameter* JSON written by common/problems_fermionic.py's random_fermionic_circuit_fermionic
+# *parameter* JSON written by propaq_benchmarks/problems_fermionic.py's random_fermionic_circuit_fermionic
 # (not the ProblemIR shape in circuits/, which is for the qubit-suite backends only) and builds
 # its own circuit natively from random even-weight MajoranaRotations, following the pattern in
 # MajoranaPropagation.jl's own test/test_vector.jl `random_circuit` helper. This is a truly
 # different gate-by-gate trajectory from the qubit-suite circuit of the same nominal size
 # (different RNG, native fermionic gates vs JW-mapped qubit gates) but describes the same
-# physical instance size, see common/problems_fermionic.py's module docstring.
+# physical instance size, see propaq_benchmarks/problems_fermionic.py's module docstring.
 #
 # Thread count is controlled at process start via `julia -t N` (VectorMajoranaSum backend).
 #
@@ -20,8 +20,7 @@ using JSON3
 using Random
 
 HERE = @__DIR__
-include(joinpath(HERE, "..", "..", "common", "experiment_runner.jl"))
-using .ExperimentRunner
+using BenchCommon: ExperimentRunner
 
 # MajoranaPropagation.jl v0.3.0 defines `coefftype` for `MajoranaSum` (src/MajoranaDataTypes.jl:162)
 # but not for `VectorMajoranaSum`, even though `propagate()` (src/propagation.jl:17) calls it

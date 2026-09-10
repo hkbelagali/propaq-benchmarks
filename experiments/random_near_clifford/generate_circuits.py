@@ -14,7 +14,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import problems_qubit  # noqa: E402
+from propaq_benchmarks import problems_qubit  # noqa: E402
 
 # Fixed 13-qubit, depth-18 Clifford skeleton, swept over t_density to probe how each
 # backend's term count scales with non-Cliffordness.

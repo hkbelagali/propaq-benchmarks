@@ -1,10 +1,10 @@
 # Shared helper that every experiment's Julia backend runner file calls.
 #
-# Mirrors common/experiment_runner.py. There is no Python orchestrator anymore, so this
+# Mirrors propaq_benchmarks/experiment_runner.py. There is no Python orchestrator anymore, so this
 # writes only a JSONL checkpoint (results_<backend>.jsonl) directly next to the experiment,
 # not an npz snapshot (Julia has no numpy-compatible npz writer in this environment).
 # Every plotting script reads both a backend's .npz (if present) and its .jsonl (if not)
-# through common/io_utils.py's load_experiment_results, so this is not a gap, just a
+# through propaq_benchmarks/io_utils.py's load_experiment_results, so this is not a gap, just a
 # different file for the same row data.
 module ExperimentRunner
 

@@ -18,7 +18,7 @@ sys.path.insert(0, str(HERE.parents[1]))
 from qiskit import QuantumCircuit  # noqa: E402
 from qiskit.quantum_info import SparsePauliOp  # noqa: E402
 
-from common.circuit_ir import qiskit_to_ir  # noqa: E402
+from propaq_benchmarks.circuit_ir import qiskit_to_ir  # noqa: E402
 
 N_QUBITS = 64
 TOTAL_LAYERS = 80

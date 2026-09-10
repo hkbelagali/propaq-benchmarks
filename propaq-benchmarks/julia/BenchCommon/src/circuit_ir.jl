@@ -1,5 +1,5 @@
 """
-Julia-side reader for the shared qubit-suite Problem IR (see ../common/circuit_ir.py).
+Julia-side reader for the shared qubit-suite Problem IR (see propaq_benchmarks/circuit_ir.py).
 
 Qubit index convention. The JSON IR uses Qiskit's own convention (0-indexed qubits,
 Pauli-string labels read little-endian, meaning the *rightmost* character is qubit 0).

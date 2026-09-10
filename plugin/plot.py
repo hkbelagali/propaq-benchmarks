@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from common.io_utils import load_records_npz  # noqa: E402
+from propaq_benchmarks.io_utils import load_records_npz  # noqa: E402
 from run import PLOTS, RESULTS, plot  # noqa: E402
 
 

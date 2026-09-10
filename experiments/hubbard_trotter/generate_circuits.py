@@ -29,7 +29,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import problems_fermionic, problems_qubit  # noqa: E402
+from propaq_benchmarks import problems_fermionic, problems_qubit  # noqa: E402
 
 # (nx, ny, steps): shared across both sides so each pair names the same nominal instance
 # even though the two circuits are built along entirely different paths.

@@ -13,7 +13,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import problems_qubit  # noqa: E402
+from propaq_benchmarks import problems_qubit  # noqa: E402
 
 # (nx, ny, steps): two small warm-up sizes, plus a fine Trotter-step curve at the 6x6=36
 # qubit lattice from the original request, one saved circuit per step count from 1 to 25.

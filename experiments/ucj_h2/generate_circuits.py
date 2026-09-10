@@ -12,7 +12,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import problems_qubit  # noqa: E402
+from propaq_benchmarks import problems_qubit  # noqa: E402
 
 # A single instance at the defaults (bond_length=0.74, n_reps=1, seed=0), the H2/STO-6G
 # UCJ ansatz used by this repo's existing propaq/benchmarks/bench_ucj.py.

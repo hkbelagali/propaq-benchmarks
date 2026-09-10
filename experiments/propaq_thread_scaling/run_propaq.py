@@ -2,7 +2,7 @@
 """Thread-scaling benchmark: propaq's Pauli-propagation runtime vs number of Trotter
 steps, swept across thread counts, on the same 2D transverse-field Ising Trotter circuit
 propaq's own CHANGELOG benchmarks against monoprop (see
-common/problems_qubit.py:ising_trotter_problem). Runtime grows with the step count (more
+propaq_benchmarks/problems_qubit.py:ising_trotter_problem). Runtime grows with the step count (more
 RZZ/RX layers to propagate through), which is the axis this experiment holds fixed per
 point and sweeps to get a range of problem sizes at each thread count.
 
@@ -25,9 +25,9 @@ os.environ.setdefault("MKL_NUM_THREADS", "1")
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import io_utils  # noqa: E402
-from common.circuit_ir import ProblemIR  # noqa: E402
-from common.experiment_runner import load_circuits  # noqa: E402
+from propaq_benchmarks import io_utils  # noqa: E402
+from propaq_benchmarks.circuit_ir import ProblemIR  # noqa: E402
+from propaq_benchmarks.experiment_runner import load_circuits  # noqa: E402
 
 warnings.simplefilter("ignore")  # propaq's transpile-fallback UserWarnings go to stderr
 

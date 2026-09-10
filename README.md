@@ -26,14 +26,20 @@ interface.
 
 ```
 bench/
-├── common/                       shared circuit IR, problem builders, checkpoint/npz helpers
-│   ├── circuit_ir.py              ProblemIR: serializes a transpiled circuit + observable
-│   ├── circuit_ir.jl               Julia-side reader for the same IR
-│   ├── experiment_runner.py       loads saved circuits and checkpoints results, used by every run_<backend>.py
-│   ├── experiment_runner.jl        the same, for the two Julia-only backends
-│   ├── io_utils.py                JSONL checkpoint + npz (de)serialization, and the plotting-side merge helper
-│   ├── problems_qubit.py           the 8 qubit-suite problem builders
-│   └── problems_fermionic.py       native-fermionic companion builders (hubbard_trotter, random_fermionic_circuit)
+├── propaq-benchmarks/             shared circuit IR, problem builders, checkpoint/npz helpers, packaged
+│   ├── pyproject.toml              pinned deps (numpy, qiskit), pip install -e'd for the Python side
+│   ├── src/propaq_benchmarks/
+│   │   ├── circuit_ir.py            ProblemIR: serializes a transpiled circuit + observable
+│   │   ├── experiment_runner.py    loads saved circuits and checkpoints results, used by every run_<backend>.py
+│   │   ├── io_utils.py             JSONL checkpoint + npz (de)serialization, and the plotting-side merge helper
+│   │   ├── problems_qubit.py        the 8 qubit-suite problem builders
+│   │   └── problems_fermionic.py    native-fermionic companion builders (hubbard_trotter, random_fermionic_circuit)
+│   └── julia/BenchCommon/          Julia package, Pkg.develop-ed into julia_env alongside the two Julia backends
+│       ├── Project.toml
+│       └── src/
+│           ├── BenchCommon.jl       top-level module, includes the two below as nested submodules
+│           ├── circuit_ir.jl        Julia-side reader for the same IR (BenchCommon.CircuitIR)
+│           └── experiment_runner.jl the same runner, for the two Julia-only backends (BenchCommon.ExperimentRunner)
 ├── experiments/
 │   ├── ising_trotter/              one of the 8 main problems, see the full layout below
 │   ├── random_circuit/             same file layout as ising_trotter
@@ -54,7 +60,7 @@ bench/
 ├── extrapolators/                 zero-noise and zero-coefficient extrapolation studies
 ├── plugin/                        native ABI noise-plugin benchmark (C, Rust, AOT Julia)
 ├── slurm/                         rebuild_native.sh, for building native extensions on a compute node
-├── julia_env/                     shared Julia Project.toml/Manifest.toml, both Julia packages Pkg.develop-ed into it
+├── julia_env/                     shared Julia Project.toml/Manifest.toml, all three Julia packages Pkg.develop-ed into it
 └── results/
     └── plots/                     every figure in the suite, flat, both .png and .pgf
 ```
@@ -103,9 +109,9 @@ resumes from the next circuit not already recorded with `ok=true`.
 ## How a fair comparison is constructed
 
 **Qubit/Pauli-basis problems** are built once in Qiskit, then transpiled (`transpile(...,
-basis_gates=["rz","rx","ry","rzz","cx","h"])`, once, in `common/circuit_ir.py`) onto a
+basis_gates=["rz","rx","ry","rzz","cx","h"])`, once, in `propaq_benchmarks/circuit_ir.py`) onto a
 common gate basis every backend supports natively or via an exact (non-approximating)
-decomposition. The resulting gate list and observable are serialized (`common/circuit_ir.py`'s
+decomposition. The resulting gate list and observable are serialized (`propaq_benchmarks/circuit_ir.py`'s
 `ProblemIR`) by each experiment's `generate_circuits.py`, then replayed identically by
 `pauli-prop` and `PauliPropagation.jl`, or handed to `propaq`/`pyrauli`/`monoprop`'s own
 `from_qiskit`-style importer (which may further transpile into that package's native basis
@@ -246,7 +252,7 @@ python3 plotting/plot_trotter_memory.py
 ```
 
 Each plotting script reads the relevant experiment folders directly
-(`common/io_utils.py`'s `load_experiment_results` merges every `results_<backend>.*` file
+(`propaq_benchmarks/io_utils.py`'s `load_experiment_results` merges every `results_<backend>.*` file
 in a folder into one list) and produces, per problem family, a grouped-bar chart of
 propagation wall time and peak RSS (log scale, small multiples across problem sizes), plus
 a dedicated line chart for the `random_near_clifford` T-density sweep and a terms-vs-time

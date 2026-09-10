@@ -26,8 +26,8 @@ from typing import Any, Callable
 
 import json
 
-from common import io_utils
-from common.circuit_ir import ProblemIR
+from . import io_utils
+from .circuit_ir import ProblemIR
 
 
 def _natural_sort_key(path: Path) -> list[Any]:
@@ -52,7 +52,7 @@ def load_circuits(circuits_dir: str | Path) -> list[tuple[str, ProblemIR]]:
 
 
 def load_fermionic_circuits(circuits_dir: str | Path) -> list[tuple[str, dict[str, Any]]]:
-    """Load every saved native-fermionic problem (common/problems_fermionic.py's
+    """Load every saved native-fermionic problem (propaq_benchmarks/problems_fermionic.py's
     FermionicProblem, just {"problem": ..., "params": ...}) in circuits_dir, as (label, dict)
     pairs. This is a different, simpler file shape than ProblemIR, used only by the native
     Majorana side of hubbard_trotter and random_fermionic_circuit, which has no qubit gate

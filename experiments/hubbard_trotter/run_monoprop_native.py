@@ -18,7 +18,7 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common.experiment_runner import run_on_saved_fermionic_circuits  # noqa: E402
+from propaq_benchmarks.experiment_runner import run_on_saved_fermionic_circuits  # noqa: E402
 
 MIN_ABS_COEFF = 1e-8
 N_THREADS = 64

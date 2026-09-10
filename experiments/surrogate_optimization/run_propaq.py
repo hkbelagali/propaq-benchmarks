@@ -17,7 +17,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import io_utils  # noqa: E402
+from propaq_benchmarks import io_utils  # noqa: E402
 
 N_THREADS = 64
 os.environ["RAYON_NUM_THREADS"] = str(N_THREADS)

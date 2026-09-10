@@ -3,8 +3,8 @@
 # hubbard_trotter native-fermionic circuit in circuits_native/.
 #
 # Unlike the qubit-suite backends, this package has no Qiskit bridge, so it reads the small
-# parameter JSON directly with JSON3 (see ../../common/problems_fermionic.py) rather than
-# through common/circuit_ir.jl's CircuitIR module (that module is for the unrelated
+# parameter JSON directly with JSON3 (see propaq-benchmarks' problems_fermionic.py) rather
+# than through BenchCommon's CircuitIR module (that module is for the unrelated
 # qubit-suite ProblemIR shape) and builds its own circuit natively with
 # hubbard_circ_fermionic_sites on an nx x ny rectangletopology, using the same t, U, dt,
 # steps as the qubit-suite Hubbard problem run by the 5 qubit-side backends.
@@ -22,8 +22,7 @@ using PauliPropagation: rectangletopology
 using JSON3
 
 HERE = @__DIR__
-include(joinpath(HERE, "..", "..", "common", "experiment_runner.jl"))
-using .ExperimentRunner
+using BenchCommon: ExperimentRunner
 
 const MIN_ABS_COEFF = 1e-8
 

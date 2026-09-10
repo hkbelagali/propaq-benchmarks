@@ -14,7 +14,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import problems_qubit  # noqa: E402
+from propaq_benchmarks import problems_qubit  # noqa: E402
 
 # (n_qubits, steps): a small warm-up size growing to a 30-qubit chain, with the Trotter step
 # count grown alongside the chain length so the circuit depth keeps scaling too.

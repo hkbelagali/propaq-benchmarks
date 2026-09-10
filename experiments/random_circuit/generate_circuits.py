@@ -13,7 +13,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
-from common import problems_qubit  # noqa: E402
+from propaq_benchmarks import problems_qubit  # noqa: E402
 
 # (n_qubits, depth): a small warm-up size plus growing qubit count at fixed depth 20, then a
 # fixed 12-qubit size grown through depth, to separate width scaling from depth scaling.
