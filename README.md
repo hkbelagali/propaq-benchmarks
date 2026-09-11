@@ -7,7 +7,7 @@ Its requirements also pin the versions of the various backends used in the paper
 ## Build
 
 ```bash
-module load Julia/1.11.3-linux-x86_64
+pip install propaq-benchmarks/
 julia --project=julia_env -e 'using Pkg; Pkg.instantiate()'
 ```
 
