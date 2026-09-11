@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-"""Compare propaq's generic Qiskit-transpilation fallback against a registered custom
-XXPlusYY decomposition for a non-Clifford exchange gate, across every saved layer count.
-
-Qiskit's generic unitary fallback expands every exchange gate into many native rotations;
-the registered XXPlusYY decomposition avoids that expansion while preserving the exact
-unitary.
+"""
+Compare runtime for an arbitrary gate versus registering the decomposition for that gate.
 """
 from __future__ import annotations
 
@@ -46,8 +42,6 @@ def build_circuit(n_layers: int) -> QuantumCircuit:
     """Build a 10-qubit connected brickwork ansatz with non-Clifford exchange gates."""
     circuit = QuantumCircuit(N_QUBITS)
     for layer in range(n_layers):
-        # Alternate two periodic matchings; each qubit interacts once per layer
-        # and with both neighbours over successive layers.
         start = layer % 2
         for qubit in range(start, N_QUBITS + start, 2):
             circuit.append(EXCHANGE_GATE, [qubit % N_QUBITS, (qubit + 1) % N_QUBITS])
@@ -71,14 +65,12 @@ def benchmark_depth(n_layers: int, runs: int) -> dict:
     circuit = build_circuit(n_layers)
     obs = observable()
 
-    # Generic Qiskit-transpilation fallback is measured before registry installation.
     _registry._QISKIT_REGISTRY.pop("unitary", None)
     _registry._VALIDATED = {key for key in _registry._VALIDATED if key[0] != "unitary"}
     fallback_circuit = PauliCircuit.from_qiskit(circuit)
     register_qiskit_gate("unitary", exchange_terms, validate=True)
     custom_circuit = PauliCircuit.from_qiskit(circuit)
 
-    # Registration validates its first dispatch against propaq's fallback, outside timing.
     if len(custom_circuit.rotations) >= len(fallback_circuit.rotations):
         raise RuntimeError("custom exchange decomposition did not reduce rotation count")
 
@@ -88,7 +80,6 @@ def benchmark_depth(n_layers: int, runs: int) -> dict:
     custom_prop = PauliPropagator(n_threads=N_THREADS, progress_bar=True)
 
     fallback_times, custom_times = [], []
-    # Internal propaq bars expose live term growth during every timed propagation.
     for _ in range(runs):
         start = time.perf_counter()
         fallback_prop.expectation_value(obs, fallback_circuit, initial_state=0)
@@ -138,7 +129,7 @@ def main() -> None:
         try:
             record = benchmark_depth(n_layers, RUNS)
             record["ok"] = True
-        except Exception as exc:  # noqa: BLE001 - a single bad depth should not abort the sweep
+        except Exception as exc:  # noqa: BLE001
             record = {"ok": False, "error": str(exc), "layers": n_layers, "runs": RUNS}
         record["label"] = path.stem
         record["backend"] = "propaq"

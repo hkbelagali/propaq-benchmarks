@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""Save the layer-count sweep for the custom_decomposition experiment.
-
-The 10-qubit brickwork circuit contains a custom UnitaryGate (the fixed non-Clifford
-exchange gate) that ProblemIR's gate list cannot serialize, since ProblemIR only stores a
-gate name plus a single angle, not an arbitrary matrix. The circuit is otherwise
-deterministic and cheap to rebuild from just its layer count, so each saved file here holds
-only that sweep parameter, and run_propaq.py rebuilds the actual Qiskit circuit from it.
+"""
+Save the layer-count sweep for the custom_decomposition experiment.
 """
 from __future__ import annotations
 
