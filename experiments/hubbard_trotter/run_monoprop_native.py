@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""Run MonoProp's native Majorana propagation of the Hubbard Trotter model.
-
-The circuit is constructed from the same ffsim Fermi-Hubbard Hamiltonian as
-run_propaq_native.py, expanded into sorted Majorana monomial rotations rather than
-Jordan-Wigner qubit gates, consuming circuits_native/ instead of the qubit-suite circuits/.
-Checkpointed to results_monoprop_native.jsonl/.npz, a distinct backend name from
-run_monoprop.py's results_monoprop.jsonl so the two measurements never collide.
+"""
+Run monoprop's Majorana propagation on the Hubbard Trotter circuits
 """
 from __future__ import annotations
 
@@ -52,9 +47,6 @@ def build_hubbard_native(params: dict[str, Any]):
     h_fermi = ffsim_to_monoprop_fermi(hamiltonian, n_sites)
     h_majorana = h_fermi.get_majorana_operator()
 
-    # Same deterministic first-order splitting as the native propaq runner, individual
-    # Majorana monomials ordered by weight then bitmask. ExpGate evolves exp(+i theta H),
-    # so theta=-dt gives the physical exp(-i H dt) Trotter factor.
     def order(item: tuple[tuple[int, ...], complex]) -> tuple[int, int]:
         mono, _ = item
         return len(mono), sum(1 << i for i in mono)
@@ -67,8 +59,6 @@ def build_hubbard_native(params: dict[str, Any]):
     gates = tuple(step_gates * steps)
     circuit = Circuit(gates=gates, parameters=tuple([-dt] * len(gates)))
 
-    # Z on the final spin-up site, Z = I - 2n. The checkerboard occupation matches
-    # problems_qubit.hubbard_trotter_problem and the other native runners.
     target = n_sites - 1
     observable = FermiOperator(
         [(), ((target, "+"), (target, "-"))], [1.0, -2.0], num_modes=2 * n_sites,

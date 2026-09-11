@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
-"""Run propaq's Majorana backend, fed a native fermionic circuit built directly from an ffsim
-FermionOperator (via propaq's MajoranaTermSum.from_ffsim) instead of propaq's usual
-MajoranaCircuit.from_qiskit path.
-
-Why this exists: from_qiskit reinterprets an already-JW-mapped qubit gate sequence in Majorana
-operators, which faithfully preserves the Jordan-Wigner string that gate sequence requires, so
-it never actually gets the term-count locality advantage native Majorana propagation is supposed
-to have (verified, propaq_pauli and propaq_majorana get bit-identical term counts on the same
-qubit-suite circuit). Going through ffsim's FermionOperator instead skips the qubit/JW embedding
-entirely. Majorana operators for different fermionic modes anticommute directly, so hopping
-terms stay weight-2 and interaction terms weight-4 regardless of site distance, matching
-MajoranaPropagation.jl's native construction far more closely than the qubit-gate path did.
-
-Consumes circuits_native/ (common.problems_fermionic.hubbard_trotter_fermionic), not the
-qubit-suite circuits/ ProblemIR, so this is a different measurement from run_propaq.py's
-propagate_majorana and is checkpointed to results_propaq_native.jsonl/.npz, a distinct backend
-name so the two never collide in this folder.
+"""
+Run propaq's Majorana propagator on the Hubbard Trotter circuits
 """
 from __future__ import annotations
 
@@ -41,10 +26,6 @@ N_THREADS = 64
 
 
 class _FermionOpWrapper:
-    """MajoranaTermSum.from_ffsim expects an object satisfying ffsim's SupportsFermionOperator
-    protocol (a _fermion_operator_() method), which a bare ffsim.FermionOperator does not
-    implement on itself, so this shim bridges the two."""
-
     def __init__(self, op: Any, norb: int):
         self._op = op
         self.norb = norb
@@ -70,28 +51,9 @@ def build_hubbard_native(params: dict[str, Any]):
     H = ffsim.fermi_hubbard_2d(nx, ny, tunneling=t, interaction=U)
     term_sum = MajoranaTermSum.from_ffsim(_FermionOpWrapper(H, norb=n_sites))
 
-    # G = exp(-i*theta*M/2) (MajoranaRotation's convention) for a Trotter step of
-    # exp(-i * coeff * M * dt) means theta = 2*coeff*dt.
-    #
-    # term_sum.items() has no defined order, confirmed empirically to vary run-to-run (a
-    # fresh Rust-side HashMap seed per process). Since the individual Hamiltonian terms
-    # (hopping vs on-site interaction) generally do not commute, applying them as
-    # first-order Trotter rotations in a different order each run is a truly different
-    # circuit, not floating-point noise, so sorting into a fixed order is required for
-    # reproducibility.
-    #
-    # The specific order also matters for how many terms survive propagation, not just for
-    # reproducibility. Sorting by ascending Majorana weight (2-operator hopping terms
-    # applied before 4-operator on-site-interaction terms) lets the cheaper, lower-weight
-    # generators merge or cancel before the circuit gets more entangled, which measured far
-    # fewer final terms than an arbitrary bitmask sort or a descending-weight sort.
     items = sorted(term_sum.items(), key=lambda gc: (bin(gc[0].modes).count("1"), gc[0].modes))
     step_rotations = [MajoranaRotation(gen, 2.0 * coeff * dt) for gen, coeff in items]
 
-    # Checkerboard initial occupation on spin-up sites only, matching problems_qubit.py's
-    # `for site in range(0, n_sites, 2): qc.x(up(site))`. This reuses propaq's own from_x
-    # conversion (Jordan-Wigner-string form for a single-qubit X) rather than hand-deriving
-    # it, and ffsim's mode order here (spin*norb+orb, spin=0=up) makes up(site) == site.
     prep_rotations = []
     for site in range(0, n_sites, 2):
         for gen, angle in MajoranaTermSum.from_x(None, [site], n_modes).items():
@@ -100,9 +62,6 @@ def build_hubbard_native(params: dict[str, Any]):
     all_rotations = prep_rotations + step_rotations * steps
     circuit = MajoranaCircuit(all_rotations, n_modes)
 
-    # Observable: Z on the same physical qubit as the qubit-suite convention (spin-up, last
-    # site), built via a SparsePauliOp and the already-validated from_sparse_pauli_op path
-    # rather than hand-rolling the Majorana form.
     target_qubit = n_sites - 1
     label = ["I"] * n_qubits
     label[n_qubits - 1 - target_qubit] = "Z"
@@ -132,7 +91,7 @@ def propagate(source: dict[str, Any]) -> dict:
     n_terms_final = res.n_terms[-1] if res.n_terms else None
 
     return {
-        "n_qubits": n_sites,  # matches run_majorana_propagation_jl.jl's convention (n_sites, not n_modes)
+        "n_qubits": n_sites,
         "gate_count": len(circuit.rotations),
         "n_threads": N_THREADS,
         "wall_time_s": wall_time_s,

@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-"""Run propaq, both Pauli and Majorana basis, on every saved hubbard_trotter circuit.
-
-Majorana basis reaches this fermionic model through Jordan-Wigner (MajoranaCircuit.from_qiskit
-on the same qubit circuit), the same qubit circuit the Pauli basis above consumes. This is the
-qubit-suite side of the comparison, distinct from run_propaq_native.py's ffsim-fed native
-Majorana construction on circuits_native/, which skips the Jordan-Wigner mapping entirely.
+"""
+Run propaq using Pauli and Majorana propagators
 """
 from __future__ import annotations
 
@@ -23,7 +19,7 @@ sys.path.insert(0, str(HERE.parents[1]))
 from propaq_benchmarks.circuit_ir import ProblemIR  # noqa: E402
 from propaq_benchmarks.experiment_runner import run_on_saved_circuits  # noqa: E402
 
-warnings.simplefilter("ignore")  # propaq's transpile-fallback UserWarnings go to stderr
+warnings.simplefilter("ignore")
 
 MIN_ABS_COEFF = 1e-6
 N_THREADS = 64

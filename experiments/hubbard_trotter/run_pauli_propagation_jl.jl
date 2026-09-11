@@ -1,11 +1,7 @@
 #!/usr/bin/env julia
-# Run PauliPropagation.jl (Pauli basis) on every saved hubbard_trotter circuit.
+# Run PauliPropagation.jl on the Hubbard trotter circuits.
 #
-# Thread count is controlled at process start via `julia -t N`, not by an in-script kwarg.
-# Always uses the VectorPauliSum backend (AcceleratedKernels-parallel, auto-degrading to
-# serial-like behavior at nthreads()==1), so a single code path covers 1 thread and many.
-#
-# Usage: julia --project=<julia_env> -t 64 experiments/hubbard_trotter/run_pauli_propagation_jl.jl
+# Usage: julia --project=<julia_env> -t N experiments/hubbard_trotter/run_pauli_propagation_jl.jl
 
 using PauliPropagation
 using JSON3
@@ -19,7 +15,7 @@ function propagate_circuit(path)
     d = CircuitIR.load_problem(path)
     circuit, thetas = CircuitIR.build_circuit_and_thetas(d)
     psum0 = CircuitIR.build_observable(d)
-    vpsum0 = VectorPauliSum(psum0)
+    vpsum0 = VectorPauliSum(psum0) # vectorpaulisum backend is faster
 
     result = propagate(circuit, vpsum0, thetas; min_abs_coeff=MIN_ABS_COEFF)
     val = overlapwithzero(result)

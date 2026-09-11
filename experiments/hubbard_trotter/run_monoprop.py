@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-"""Run monoprop (Pauli basis) on every saved hubbard_trotter circuit.
-
-MonoProp's Qiskit adapter accepts PauliEvolution gates and Pauli rotations, but not the
-saved circuits' Clifford h/cx instructions. This decomposes exactly into {rx, ry, rz, rxx}
-first, which MonoProp accepts, whenever the direct conversion is rejected.
+"""
+Run monoprop's Pauli basis propagation on the Hubbard Trotter circuits
 """
 from __future__ import annotations
 
@@ -46,8 +43,6 @@ def propagate(ir: ProblemIR) -> dict:
         conversion_mode = "decomposed"
     observable = from_qiskit_operator(ir.observable.to_sparse_pauli_op())
 
-    # A cutoff equal to register width is structurally exact. Only the coefficient
-    # threshold below truncates.
     prop = PauliPropagator(observable, initial_state, cutoff=ir.n_qubits, lower_atol=MIN_ABS_COEFF)
     prop.propagate(circuit)
 
@@ -61,7 +56,5 @@ def propagate(ir: ProblemIR) -> dict:
 
 
 if __name__ == "__main__":
-    # MonoProp reads this when it constructs the C++ propagator. "auto" partitioning then
-    # uses one partition per physical core, capped here to the suite-wide thread request.
     os.environ["monoprop_NUM_THREADS"] = str(N_THREADS)
     run_on_saved_circuits(HERE / "circuits", HERE, "monoprop", "pauli", propagate)
