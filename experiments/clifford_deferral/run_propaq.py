@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
-"""Run propaq's PauliPropagator with and without Clifford deferral on every saved
-clifford_deferral circuit, recording both timings and the on/off agreement check.
-
-Deferral is toggled via the PROPAQ_DISABLE_CLIFFORD_DEFERRAL env var, read at the start
-of every propagation call in crates/pauli/src/engine.rs and crates/majorana/src/engine.rs.
-It forces defer_cliffords = false, so every Clifford rotation takes the generic branching
-path instead of being absorbed into the frame tableau in O(1).
-Each circuit produces one result record with both timings paired together, not two
-independent runs, so this uses a custom loop instead of common.experiment_runner's
-run_on_saved_circuits.
+"""
+Test propaq's Clifford deferral optimization using an ablation study
 """
 from __future__ import annotations
 
@@ -66,10 +58,6 @@ def propagate(ir: ProblemIR) -> dict:
     t_off, v_off, n_off = time_run(circuit, obs, trunc, N_THREADS, REPEATS)
     os.environ.pop("PROPAQ_DISABLE_CLIFFORD_DEFERRAL", None)
 
-    # Deferral is exact. It changes only how many Clifford steps are folded into the frame
-    # tableau versus branched into the term store, never the physics.
-    # n_terms legitimately differs between the two, so only the expectation value is
-    # asserted, not the term count.
     agreement = abs(v_on - v_off)
     if agreement > 1e-6:
         raise RuntimeError(f"p={ir.params['p']}: deferral changed the expectation value by {agreement:.3e}")
@@ -109,7 +97,7 @@ def main() -> None:
         try:
             record = propagate(ir)
             record["ok"] = True
-        except Exception as exc:  # noqa: BLE001 - a single bad circuit should not abort the run
+        except Exception as exc:  # noqa: BLE001
             record = {"ok": False, "error": str(exc), "p": p}
         record["label"] = label
         record["backend"] = "propaq"

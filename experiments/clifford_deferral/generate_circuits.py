@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-"""Build and save one clifford_deferral circuit instance per T-gate insertion proportion.
-
-Run this once (or again after changing PROPORTIONS below) before run_propaq.py in this
-folder. canonicalize_circuit is False here since Clifford-deferral behavior depends on the
-exact Clifford/T gate structure build_circuit produces, and canonicalizing would change
-that structure and invalidate the on/off comparison.
+"""
+Build the circuits at each T gate density for the Clifford deferral benchmarks
 """
 from __future__ import annotations
 
