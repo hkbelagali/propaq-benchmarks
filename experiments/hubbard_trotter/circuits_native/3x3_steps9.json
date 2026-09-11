@@ -1,1 +1,0 @@
-{"problem": "hubbard_trotter", "params": {"nx": 3, "ny": 3, "t": 1.0, "U": 2.0, "dt": 0.1, "steps": 9, "n_sites": 9}}
