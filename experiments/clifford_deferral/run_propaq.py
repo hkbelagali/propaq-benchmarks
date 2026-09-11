@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Test propaq's Clifford deferral optimization using an ablation study
+Test propaq's Clifford deferral optimization using an ablation .
+This verifies whether deferring Clifford gates using a tableau
+has any benefit for circuits with low T-gate density. 
 """
 from __future__ import annotations
 
