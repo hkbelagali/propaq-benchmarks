@@ -11,3 +11,6 @@ PauliPropagation = "293282d5-3c99-4fb6-92d0-fd3280a19750"
 julia = "=1.11.3"
 JSON3 = "=1.14.3"
 PauliPropagation = "=0.7.3"
+
+[sources]
+PauliPropagation = {url = "https://github.com/SparqleSim/PauliPropagation.jl", rev = "v0.7.3"}
