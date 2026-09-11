@@ -1,1 +1,0 @@
-{"problem": "random_fermionic_circuit", "params": {"n_modes": 8, "n_gates": 20, "seed": 0, "max_weight_per_gate": 4}}
