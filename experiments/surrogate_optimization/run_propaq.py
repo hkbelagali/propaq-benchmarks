@@ -74,12 +74,8 @@ class _FixedBudgetResult:
 
 
 def optimize(objective, initial_point: np.ndarray, maxiter: int, tol: float):
-    """Run a derivative-free optimization for exactly maxiter objective evaluations.
-
-    COBYLA's own stopping rules cannot be relied on to spend the budget, so the budget is
-    enforced here instead: the objective is wrapped in a counter that aborts the solve the
-    moment the quota is met, so each path follows its own genuine COBYLA trajectory for an
-    identical number of evaluations.
+    """
+    Run a derivative-free optimization for exactly maxiter objective evaluations.
     """
     calls = 0
     best_x, best_fun = np.asarray(initial_point, dtype=float), np.inf

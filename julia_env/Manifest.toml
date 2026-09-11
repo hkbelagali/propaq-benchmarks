@@ -2,7 +2,7 @@
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "856fcfa2d49a14f6a66379f47f351158518fcd45"
+project_hash = "9e186d80485cfbab55908b5e6f8ede180d0aedfe"
 
 [[deps.AcceleratedKernels]]
 deps = ["ArgCheck", "GPUArraysCore", "KernelAbstractions", "Markdown", "UnsafeAtomics"]
