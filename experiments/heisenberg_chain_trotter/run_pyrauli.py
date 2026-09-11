@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""Run pyrauli (Pauli basis) on every saved heisenberg_chain_trotter circuit.
-
-pyrauli.from_qiskit needs reverse=True on the observable. pyrauli's own Observable string
-convention is big-endian (leftmost char = qubit 0), the opposite of Qiskit's little-endian
-convention, and from_qiskit does not correct for this by default. Without it, expectation
-values come out silently wrong (confirmed, exactly 0 for entangled circuits, sign-flipped
-for product states).
+"""
+Run pyrauli (Pauli basis) on every Heisenberg chain Trotter circuit.
 """
 from __future__ import annotations
 
@@ -47,7 +42,5 @@ def propagate(ir: ProblemIR) -> dict:
 if __name__ == "__main__":
     import os
 
-    # pyrauli's OpenMP thread count is process-wide via OMP_NUM_THREADS, read once at its
-    # first parallel region, so it must be set before pyrauli's C++ extension is imported.
     os.environ.setdefault("OMP_NUM_THREADS", str(N_THREADS))
     run_on_saved_circuits(HERE / "circuits", HERE, "pyrauli", "pauli", propagate)

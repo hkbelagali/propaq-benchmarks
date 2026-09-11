@@ -1,9 +1,5 @@
 #!/usr/bin/env julia
-# Run PauliPropagation.jl (Pauli basis) on every saved heisenberg_chain_trotter circuit.
-#
-# Thread count is controlled at process start via `julia -t N`, not by an in-script kwarg.
-# Always uses the VectorPauliSum backend (AcceleratedKernels-parallel, auto-degrading to
-# serial-like behavior at nthreads()==1), so a single code path covers 1 thread and many.
+# Run PauliPropagation.jl on every saved Heisenberg trotter circuit.
 #
 # Usage: julia --project=<julia_env> -t 64 experiments/heisenberg_chain_trotter/run_pauli_propagation_jl.jl
 

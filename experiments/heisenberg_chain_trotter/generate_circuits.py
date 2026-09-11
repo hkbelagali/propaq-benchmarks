@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-"""Build and save every heisenberg_chain_trotter circuit instance this experiment compares
-backends on.
-
-Run this once (or again after changing SIZES below) before any run_<backend> file in this
-folder. Every run_<backend> file then loads whatever is saved in circuits/ and does not
-build circuits itself.
+"""
+Build and save the Heisenberg chain Trotter circuits for benchmarks
 """
 from __future__ import annotations
 
@@ -16,8 +12,6 @@ sys.path.insert(0, str(HERE.parents[1]))
 
 from propaq_benchmarks import problems_qubit  # noqa: E402
 
-# (n_qubits, steps): a small warm-up size growing to a 30-qubit chain, with the Trotter step
-# count grown alongside the chain length so the circuit depth keeps scaling too.
 SIZES = [(12, 2), (20, 4), (26, 6), (30, 8)]
 
 

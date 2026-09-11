@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-"""Run propaq, both Pauli and Majorana basis, on every saved heisenberg_chain_trotter circuit.
-
-Majorana basis reaches this spin chain through Jordan-Wigner (MajoranaCircuit.from_qiskit
-on the same qubit circuit), the same qubit circuit the Pauli basis above consumes, giving a
-same-package, same-input Pauli-vs-Majorana comparison point in addition to the
-cross-package one.
+"""
+Run propaq on every saved Heisenberg chain Trotter circuit.
 """
 from __future__ import annotations
 
