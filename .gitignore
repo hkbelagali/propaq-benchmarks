@@ -26,3 +26,4 @@ slurm/
 plotting/ 
 extrapolators/
 plugin/
+experiments/
