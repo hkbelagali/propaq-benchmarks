@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-"""Compare direct and compiled-surrogate QAOA optimization.
-
-The workload is depth-two QAOA for MaxCut on a 12-vertex 3-regular graph. It is
-deliberately large enough that direct numerical propagation is substantial, while the
-symbolic model remains practical to compile. Both paths use the same deterministic COBYLA
-optimization budget and starting point.
+"""
+Compare direct and compiled-surrogate QAOA optimization.
 """
 from __future__ import annotations
 
@@ -98,9 +94,6 @@ def optimize(objective, initial_point: np.ndarray, maxiter: int, tol: float):
             best_fun, best_x = value, np.array(values, dtype=float)
         return value
 
-    # COBYLA's trust region collapses after roughly 117 evaluations on this problem
-    # whatever the tolerance, so spending the budget takes restarts, each resuming from
-    # the best point found so far.
     while calls < maxiter:
         before = calls
         try:
@@ -125,7 +118,6 @@ def benchmark(spec: dict, maxiter: int, minimum_speedup: float, tol: float) -> d
     initial_point = np.array(spec["initial_point"])
     parameter_list = list(parameters)
 
-    # Build and validate the compiled objective before timing either optimizer.
     surrogate_circuit = SurrogatePauliCircuit.from_qiskit(circuit)
     start = time.perf_counter()
     raw_model = PauliSurrogatePropagator(n_threads=N_THREADS, progress_bar=True).build(
@@ -143,8 +135,6 @@ def benchmark(spec: dict, maxiter: int, minimum_speedup: float, tol: float) -> d
             observable, numeric_circuit, initial_state=0
         ).expectation_value
 
-    # The two objectives must agree at the common starting point before running
-    # an optimizer; this catches parameter-ordering or conversion errors.
     initial_discrepancy = abs(numerical_objective(initial_point) - compiled_objective.evaluate(initial_point))
     if initial_discrepancy > 1e-9:
         raise RuntimeError(f"compiled objective disagrees at the initial point by {initial_discrepancy:.3e}")
@@ -158,7 +148,6 @@ def benchmark(spec: dict, maxiter: int, minimum_speedup: float, tol: float) -> d
     compiled_optimization_seconds = time.perf_counter() - start
     speedup = numerical_seconds / compiled_optimization_seconds
 
-    # A speedup is only a like-for-like ratio if both paths did the same amount of work.
     if int(numerical_result.nfev) != int(compiled_result.nfev):
         raise RuntimeError(
             f"evaluation counts differ (numerical={numerical_result.nfev}, "

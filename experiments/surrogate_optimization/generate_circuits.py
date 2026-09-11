@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""Save the fixed QAOA MaxCut problem parameters for the surrogate_optimization experiment.
-
-The QAOA ansatz here is parameterized with a live Qiskit ParameterVector, which propaq's
-SurrogatePauliCircuit compiles symbolically. ProblemIR can only serialize a circuit with
-concrete float gate angles, not an unbound symbolic parameter, so the actual circuit is
-rebuilt in run_propaq.py from these saved descriptive parameters (build_problem is fully
-deterministic, so this loses nothing).
+"""
+Save QAOA Max Cut problem instances for testing surrogate propagation
 """
 from __future__ import annotations
 
@@ -16,7 +11,6 @@ HERE = Path(__file__).resolve().parent
 
 N_QUBITS = 12
 N_LAYERS = 2
-# C_12 plus opposite vertices, giving every vertex degree three.
 MAXCUT_EDGES = [(qubit, (qubit + 1) % N_QUBITS) for qubit in range(N_QUBITS)] + [
     (qubit, qubit + N_QUBITS // 2) for qubit in range(N_QUBITS // 2)
 ]
