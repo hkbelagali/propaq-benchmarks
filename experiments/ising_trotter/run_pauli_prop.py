@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run pauli-prop (Pauli basis, single-threaded) on every saved ising_trotter circuit."""
+"""Run pauli-prop on the Ising Trotter benchmarks."""
 from __future__ import annotations
 
 import sys
@@ -13,7 +13,7 @@ from propaq_benchmarks.circuit_ir import ProblemIR  # noqa: E402
 from propaq_benchmarks.experiment_runner import run_on_saved_circuits  # noqa: E402
 
 MIN_ABS_COEFF = 1e-6
-MAX_TERMS = 2_000_000_000  # a required non-None placeholder, see pauli-prop's known issue below
+MAX_TERMS = 2_000_000_000 
 
 
 def propagate(ir: ProblemIR) -> dict:
@@ -24,10 +24,6 @@ def propagate(ir: ProblemIR) -> dict:
 
     t0 = time.perf_counter()
     cliff, residual = pauli_prop.evolve_through_cliffords(qc)
-    # pauli-prop's propagate_through_circuit docstring says max_terms=None disables the
-    # term-count cap, but it crashes with TypeError on None instead. MAX_TERMS is set high
-    # enough to never actually bind, matching this backend's truncation to every other
-    # backend's coefficient-cutoff-only truncation.
     evolved, one_norm = pauli_prop.propagate_through_circuit(
         obs, residual, max_terms=MAX_TERMS, atol=MIN_ABS_COEFF, frame="h",
     )

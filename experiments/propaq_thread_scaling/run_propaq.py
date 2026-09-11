@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
-"""Thread-scaling benchmark: propaq's Pauli-propagation runtime vs number of Trotter
-steps, swept across thread counts, on the same 2D transverse-field Ising Trotter circuit
-propaq's own CHANGELOG benchmarks against monoprop (see
-propaq_benchmarks/problems_qubit.py:ising_trotter_problem). Runtime grows with the step count (more
-RZZ/RX layers to propagate through), which is the axis this experiment holds fixed per
-point and sweeps to get a range of problem sizes at each thread count.
-
-n_threads is a real constructor kwarg on propaq's propagators, so every thread count in
-THREAD_SWEEP is swept in-process for each saved circuit, with one result row per
-(steps, n_threads) pair.
+"""
+Check thread scaling of propaq on some benchmark circuits.
 """
 from __future__ import annotations
 
@@ -29,7 +21,7 @@ from propaq_benchmarks import io_utils  # noqa: E402
 from propaq_benchmarks.circuit_ir import ProblemIR  # noqa: E402
 from propaq_benchmarks.experiment_runner import load_circuits  # noqa: E402
 
-warnings.simplefilter("ignore")  # propaq's transpile-fallback UserWarnings go to stderr
+warnings.simplefilter("ignore")
 
 THREAD_SWEEP = [1, 2, 4, 8, 16, 32, 64]
 REPEATS = 5

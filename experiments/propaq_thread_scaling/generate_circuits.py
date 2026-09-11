@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-"""Build and save one 2D Ising Trotter circuit per step count in STEPS_SWEEP.
-
-Run this once (or again after changing STEPS_SWEEP below) before run_propaq.py in this
-folder. This experiment is propaq-only, sweeping both Trotter step count and thread count
-on a fixed 3x3 Ising Trotter circuit family, distinct from experiments/thread_scaling,
-which compares multiple backends.
+"""
+Build and save 2D Ising Trotter circuits
 """
 from __future__ import annotations
 

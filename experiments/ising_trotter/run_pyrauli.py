@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""Run pyrauli (Pauli basis) on every saved ising_trotter circuit.
-
-pyrauli.from_qiskit needs reverse=True on the observable. pyrauli's own Observable string
-convention is big-endian (leftmost char = qubit 0), the opposite of Qiskit's little-endian
-convention, and from_qiskit does not correct for this by default. Without it, expectation
-values come out silently wrong (confirmed, exactly 0 for entangled circuits, sign-flipped
-for product states).
+"""
+Run pyrauli on the Ising Trotter circuits.
 """
 from __future__ import annotations
 
