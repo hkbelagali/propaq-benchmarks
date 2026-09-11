@@ -40,4 +40,4 @@ function warmup()
 end
 
 warmup()
-run_on_saved_circuits(joinpath(HERE, "circuits"), HERE, "pauli_propagation_jl", "pauli", propagate_circuit)
+ExperimentRunner.run_on_saved_circuits(joinpath(HERE, "circuits"), HERE, "pauli_propagation_jl", "pauli", propagate_circuit)

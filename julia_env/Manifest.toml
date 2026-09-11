@@ -277,7 +277,7 @@ version = "0.5.16"
 
 [[deps.MajoranaPropagation]]
 deps = ["AcceleratedKernels", "BitIntegers", "Bits", "LinearAlgebra", "PauliPropagation"]
-path = "../../MajoranaPropagation.jl"
+git-tree-sha1 = "d62823f20677593ff5e256e5f8bc316dd7aecd7a"
 uuid = "c1ba0b60-2606-4ffc-8aea-7c4a0f2726e4"
 version = "0.3.0"
 
@@ -333,7 +333,7 @@ version = "2.8.6"
 
 [[deps.PauliPropagation]]
 deps = ["AcceleratedKernels", "BitIntegers", "Bits", "JSON", "LinearAlgebra", "PlotGraphviz", "ProfileCanvas", "Random", "StatsBase", "Test", "UUIDs"]
-path = "../../PauliPropagation.jl"
+git-tree-sha1 = "757b43af3c247d9fad953dd056d3df76fe6e6a08"
 uuid = "293282d5-3c99-4fb6-92d0-fd3280a19750"
 version = "0.7.3"
 

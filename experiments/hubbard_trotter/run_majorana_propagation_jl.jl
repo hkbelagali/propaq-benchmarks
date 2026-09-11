@@ -72,4 +72,4 @@ function warmup()
 end
 
 warmup()
-run_on_saved_circuits(joinpath(HERE, "circuits_native"), HERE, "majorana_propagation_jl", "majorana", propagate_circuit)
+ExperimentRunner.run_on_saved_circuits(joinpath(HERE, "circuits_native"), HERE, "majorana_propagation_jl", "majorana", propagate_circuit)
