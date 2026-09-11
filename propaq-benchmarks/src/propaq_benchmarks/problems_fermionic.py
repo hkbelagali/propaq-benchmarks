@@ -1,13 +1,5 @@
-"""Native-fermionic problem *parameters* for MajoranaPropagation.jl.
-
-MajoranaPropagation.jl has no Qiskit bridge, so it cannot consume the qubit-suite JSON IR
-(circuit_ir.py). It builds its own circuits directly from physical parameters using its
-native fermionic gate builders (see experiments/hubbard_trotter/run_majorana_propagation_jl.jl and experiments/random_fermionic_circuit/run_majorana_propagation_jl.jl). These two functions
-just record the *same* physical parameters used by the matching qubit-suite problems
-(problems_qubit.hubbard_trotter_problem / random_fermionic_circuit_problem) into a small JSON
-file, so the two construction paths ("qiskit gates + JW, for propaq-Majorana" vs "native
-fermionic gates, for MajoranaPropagation.jl") describe the same model/instance even though the
-resulting term-by-term trajectories differ.
+"""
+Fermionic problem parameters for MajoranaPropagation.jl
 """
 from __future__ import annotations
 

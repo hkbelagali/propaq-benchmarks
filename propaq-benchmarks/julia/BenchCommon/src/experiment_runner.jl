@@ -1,11 +1,4 @@
-# Shared helper that every experiment's Julia backend runner file calls.
-#
-# Mirrors propaq_benchmarks/experiment_runner.py. There is no Python orchestrator anymore, so this
-# writes only a JSONL checkpoint (results_<backend>.jsonl) directly next to the experiment,
-# not an npz snapshot (Julia has no numpy-compatible npz writer in this environment).
-# Every plotting script reads both a backend's .npz (if present) and its .jsonl (if not)
-# through propaq_benchmarks/io_utils.py's load_experiment_results, so this is not a gap, just a
-# different file for the same row data.
+# All the experiments call this module to run for the saved circuits
 module ExperimentRunner
 
 using JSON3
@@ -13,10 +6,6 @@ using JSON3
 export run_on_saved_circuits
 
 function _natural_sort_key(path::AbstractString)
-    # Zero-pads every run of digits to a fixed width so plain string comparison already
-    # puts steps2 before steps10. Plain alphabetical sort on the unpadded name puts steps10
-    # before steps2, which processes a fine step curve out of numeric order and makes a
-    # partial run's progress confusing to read.
     stem = splitext(basename(path))[1]
     return replace(stem, r"\d+" => (m -> lpad(m, 10, '0')))
 end
@@ -26,15 +15,6 @@ function circuit_paths(circuits_dir::AbstractString)
     sort(paths; by=_natural_sort_key)
 end
 
-"""
-    run_on_saved_circuits(circuits_dir, experiment_dir, backend, basis, propagate)
-
-Call `propagate(path)` once per saved circuit JSON file in `circuits_dir`. `propagate`
-must return a `Dict` of result fields including at least `n_qubits`, `problem`, and
-`params`, plus whatever the backend measured. `wall_time_s` is filled in automatically
-around the call unless `propagate` already set it. A circuit whose label is already
-recorded with `ok=true` in the existing checkpoint is skipped.
-"""
 function run_on_saved_circuits(circuits_dir, experiment_dir, backend::AbstractString,
                                 basis::AbstractString, propagate::Function)
     checkpoint = joinpath(experiment_dir, "results_$(backend).jsonl")

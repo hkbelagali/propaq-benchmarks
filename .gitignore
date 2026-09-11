@@ -24,3 +24,5 @@ slurm/
 *.egg-info/
 .pytest_cache/
 plotting/ 
+extrapolators/
+plugin/

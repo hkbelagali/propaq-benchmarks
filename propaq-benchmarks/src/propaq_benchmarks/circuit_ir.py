@@ -1,24 +1,6 @@
-"""Backend-agnostic circuit intermediate representation (IR) for the qubit/Pauli benchmark suite.
-
-Every qubit-suite problem (random circuits, Ising/Heisenberg Trotter, QAOA, UCJ-H2) is built
-once in Qiskit, canonicalized onto a common gate basis {rz, rx, ry, rzz, cx, h}, and serialized
-to plain JSON. Every backend runner (pauli-prop, propaq, pyrauli, PauliPropagation.jl) then
-either replays this exact gate list (pauli-prop, PauliPropagation.jl) or reconstructs a Qiskit
-QuantumCircuit from it and hands it to that package's own `from_qiskit`-style importer
-(propaq, pyrauli), which may further transpile into its own native basis internally. That
-inner transpilation is expected and reflects real-world usage of each library; what this IR
-guarantees is that all backends start from the identical logical circuit (same qubits, same
-gates, same parameters, same order).
-
-COMMON_BASIS gates were chosen because all four Pauli-basis backends support them either
-natively or via an exact (non-approximating) decomposition:
-  - pauli-prop:            rz/rx/ry/rzz natively, with cx/h recognized as Cliffords.
-  - PauliPropagation.jl:   rz/rx/ry -> PauliRotation([:Z/:X/:Y],[q]), rzz -> PauliRotation([:Z,:Z],[q1,q2]),
-                            cx -> CliffordGate(:CNOT,[q1,q2]), h -> CliffordGate(:H,[q]).
-  - pyrauli:                rz/h/cx native, with rx/ry decomposed exactly via H+Rz identities in
-                            pyrauli's own converters.py.
-  - propaq:                 rz/rx/ry native, with cx/h/rzz auto-transpiled into propaq's own basis
-                            (xx_plus_yy/p/cp/x/swap) by Qiskit's transpiler, which preserves unitarity.
+"""
+Circuit representations for the benchmarks. We choose a basis 
+that is native to the packages being benchmarked on the Python side.
 """
 from __future__ import annotations
 
@@ -66,14 +48,6 @@ class ObservableIR:
 
     @staticmethod
     def from_sparse_pauli_op(op: SparsePauliOp) -> "ObservableIR":
-        # Qiskit Pauli labels read little-endian (rightmost char = qubit 0). We keep Qiskit's
-        # own convention throughout so every backend that reconstructs a SparsePauliOp from
-        # this IR gets bit-for-bit the same object back.
-        #
-        # This must be .to_label(), not str(p)/repr(p). Qiskit's Pauli.__str__ silently truncates to
-        # ~50 chars with a literal "..." for large qubit counts (confirmed at 72 qubits), which
-        # writes a corrupted, wrong-length label to the JSON IR that then fails to parse back
-        # into a Pauli at load time. This is invisible below ~50 qubits, which is why it went unnoticed.
         return ObservableIR(
             paulis=[p.to_label() for p in op.paulis],
             coeffs=[complex(c).real for c in op.coeffs],
@@ -139,9 +113,6 @@ class ProblemIR:
             elif g.name == "cp":
                 qc.cp(g.angle, g.qubits[0], g.qubits[1])
             elif g.name == "xx_plus_yy":
-                # beta (the 2nd XXPlusYYGate angle) is never non-zero anywhere in this repo's
-                # problem builders, so it's not captured in GateOp. Only the constructors'
-                # single positional theta angle is (see qiskit_to_ir's params[0]-only capture).
                 from qiskit.circuit.library import XXPlusYYGate
                 qc.append(XXPlusYYGate(g.angle), [g.qubits[0], g.qubits[1]])
             else:
@@ -153,8 +124,7 @@ class ProblemIR:
 
 
 def canonicalize(qc: QuantumCircuit) -> QuantumCircuit:
-    """Transpile an arbitrary Qiskit circuit onto COMMON_BASIS, one time, so every backend
-    downstream sees the exact same gate sequence."""
+    """Transpile qiskit circuits into the shared basis""" 
     return transpile(qc, basis_gates=COMMON_BASIS, optimization_level=1, seed_transpiler=0)
 
 

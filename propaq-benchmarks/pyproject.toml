@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "propaq-benchmarks"
 version = "0.1.0"
-description = "Shared circuit IR, problem builders, and experiment-runner harness for the propaq benchmark suite"
+description = "Utilities to set up and run propaq benchmarks"
 requires-python = ">=3.11"
 dependencies = [
     "numpy==2.3.0",

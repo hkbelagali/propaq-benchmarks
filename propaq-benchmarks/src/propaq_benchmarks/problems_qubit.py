@@ -1,13 +1,5 @@
-"""Qubit/Pauli-basis benchmark problems, built once in Qiskit and canonicalized onto
-COMMON_BASIS = {rz, rx, ry, rzz, cx, h} (see circuit_ir.py) so every Pauli-basis backend
-(pauli-prop, PauliPropagation.jl, pyrauli, propaq-Pauli), and propaq-Majorana via its own
-from_qiskit Jordan-Wigner mapping, run the literal same gate sequence.
-
-Each problem function returns a `ProblemIR`. Observable convention: a single local Z on the
-"middle" qubit for all structured/random problems (a standard choice in the Pauli-propagation
-literature, which keeps the initial term count at 1 across all backends so runtime differences
-reflect circuit propagation, not observable-parsing overhead). UCJ-H2 uses Z_0 Z_1 to match
-the convention already established in this repo's existing `propaq/benchmarks/bench_ucj.py`.
+"""
+Qubit problems for benchmarks
 """
 from __future__ import annotations
 
@@ -34,9 +26,6 @@ def _zz_observable(n_qubits: int, i: int = 0, j: int = 1) -> SparsePauliOp:
     return SparsePauliOp("".join(label))
 
 
-# --------------------------------------------------------------------------------------
-# P1. Random circuit: a standard brickwork random circuit over the common basis.
-# --------------------------------------------------------------------------------------
 def random_circuit_problem(n_qubits: int, depth: int, seed: int = 0, two_q_prob: float = 0.5) -> ProblemIR:
     rng = np.random.default_rng(seed)
     qc = QuantumCircuit(n_qubits)
@@ -66,12 +55,6 @@ def random_circuit_problem(n_qubits: int, depth: int, seed: int = 0, two_q_prob:
     )
 
 
-# --------------------------------------------------------------------------------------
-# P2. Random near-Clifford circuit: Clifford skeleton (H/CX) with a tunable density of
-# non-Clifford RZ(theta) "magic" gates. Sweeping t_density probes how each backend's term
-# count (and runtime) scales with non-Cliffordness, a well-known differentiator for
-# Pauli-propagation methods, since Clifford gates never branch the Pauli sum.
-# --------------------------------------------------------------------------------------
 def random_near_clifford_problem(
     n_qubits: int, depth: int, t_density: float, seed: int = 0
 ) -> ProblemIR:
@@ -94,10 +77,6 @@ def random_near_clifford_problem(
     )
 
 
-# --------------------------------------------------------------------------------------
-# P3. 2D transverse-field Ising model Trotter circuit on an nx x ny grid (default 6x6=36
-# qubits, per the user's request). H = -J sum_<i,j> Z_i Z_j - h sum_i X_i.
-# --------------------------------------------------------------------------------------
 def _grid_edges(nx: int, ny: int, periodic: bool) -> list[tuple[int, int]]:
     def idx(x: int, y: int) -> int:
         return y * nx + x
@@ -138,11 +117,6 @@ def ising_trotter_problem(
     )
 
 
-# --------------------------------------------------------------------------------------
-# P4. 1D Heisenberg XXZ chain Trotter circuit. H = sum_i Jxy (X_i X_{i+1} + Y_i Y_{i+1})
-# + Jz Z_i Z_{i+1}. A non-integrable-in-general, canonical spin-chain dynamics benchmark
-# complementing the (integrable, free-fermion-dual) transverse-field Ising model above.
-# --------------------------------------------------------------------------------------
 def heisenberg_chain_trotter_problem(
     n_qubits: int = 20, Jxy: float = 1.0, Jz: float = 1.0, dt: float = 0.1,
     steps: int = 4, periodic: bool = False,
@@ -153,9 +127,7 @@ def heisenberg_chain_trotter_problem(
         bonds.append((n_qubits - 1, 0))
     for _ in range(steps):
         for (i, j) in bonds:
-            # exp(-i dt (Jxy XX + Jxy YY + Jz ZZ)) via a standard XX+YY+ZZ Trotter slice,
-            # each generator commutes with itself across the slice so simple RZZ-conjugated
-            # rotations suffice. Rotate to X/Y bases with H (X<->Z) and Rx(pi/2) (Y<->Z).
+
             qc.h(i); qc.h(j)
             qc.rzz(-2.0 * Jxy * dt, i, j)
             qc.h(i); qc.h(j)
@@ -171,12 +143,9 @@ def heisenberg_chain_trotter_problem(
     )
 
 
-# --------------------------------------------------------------------------------------
-# P5. QAOA MaxCut on a random 3-regular graph.
-# --------------------------------------------------------------------------------------
 def qaoa_maxcut_problem(n_qubits: int = 16, p: int = 3, seed: int = 0, degree: int = 3) -> ProblemIR:
     rng = np.random.default_rng(seed)
-    import networkx  # local import, to keep module import list light
+    import networkx 
     graph = networkx.random_regular_graph(degree, n_qubits, seed=seed)
     edges = list(graph.edges())
 
@@ -199,12 +168,6 @@ def qaoa_maxcut_problem(n_qubits: int = 16, p: int = 3, seed: int = 0, degree: i
     )
 
 
-# --------------------------------------------------------------------------------------
-# P6. Unitary cluster Jastrow (UCJ) ansatz for H2/STO-3G, built with ffsim + pyscf,
-# transpiled to the common basis exactly as this repo's existing propaq benchmark
-# (propaq/benchmarks/bench_ucj.py) already does, so this new benchmark is consistent
-# with the pre-existing convention. Observable is Z0 Z1, matching that file too.
-# --------------------------------------------------------------------------------------
 def ucj_h2_problem(bond_length: float = 0.74, n_reps: int = 1, seed: int = 0) -> ProblemIR:
     import pyscf
     import ffsim
@@ -236,16 +199,6 @@ def ucj_h2_problem(bond_length: float = 0.74, n_reps: int = 1, seed: int = 0) ->
          "n_qubits": n_qubits},
     )
 
-
-# --------------------------------------------------------------------------------------
-# P7. Fermi-Hubbard model Trotter circuit (JW-mapped), built from qiskit's native fermionic-
-# simulation gates (XXPlusYYGate for hopping, CPhase for the on-site U n_up n_dn interaction)
-# so `canonicalize()` transpiles it into COMMON_BASIS exactly like the UCJ-H2 circuit above.
-# Qubits 0..n_sites-1 are spin-up orbitals, n_sites..2*n_sites-1 are spin-down orbitals.
-# This is the qubit-suite twin of the native fermionic `hubbard_trotter` problem that
-# MajoranaPropagation.jl builds directly (see experiments/hubbard_trotter/run_majorana_propagation_jl.jl) with
-# matching t, U, dt, steps parameters, i.e. the same physical model, package-native construction.
-# --------------------------------------------------------------------------------------
 def hubbard_trotter_problem(
     nx: int = 3, ny: int = 3, t: float = 1.0, U: float = 2.0, dt: float = 0.1,
     steps: int = 2, periodic: bool = False, canonicalize: bool = True,
@@ -263,7 +216,6 @@ def hubbard_trotter_problem(
         return n_sites + site
 
     qc = QuantumCircuit(n_qubits)
-    # half-filling initial occupation (checkerboard) so the observable below is non-trivial
     for site in range(0, n_sites, 2):
         qc.x(up(site))
     for _ in range(steps):
@@ -281,13 +233,6 @@ def hubbard_trotter_problem(
         canonicalize_circuit=canonicalize,
     )
 
-
-# --------------------------------------------------------------------------------------
-# P8. Random fermionic circuit: random hopping (XXPlusYY) + random on-site phase (CPhase)
-# rotations at random angles, the JW/qubit-gate analog of a random Majorana-rotation circuit
-# (fermionic counterpart of P1). MajoranaPropagation.jl gets a matched-size native version
-# built directly from random MajoranaRotations (see experiments/random_fermionic_circuit/run_majorana_propagation_jl.jl).
-# --------------------------------------------------------------------------------------
 def random_fermionic_circuit_problem(n_modes: int = 12, n_gates: int = 40, seed: int = 0) -> ProblemIR:
     from qiskit.circuit.library import XXPlusYYGate
 

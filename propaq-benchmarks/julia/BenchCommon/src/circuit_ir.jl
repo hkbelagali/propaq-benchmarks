@@ -1,12 +1,5 @@
 """
-Julia-side reader for the shared qubit-suite Problem IR (see propaq_benchmarks/circuit_ir.py).
-
-Qubit index convention. The JSON IR uses Qiskit's own convention (0-indexed qubits,
-Pauli-string labels read little-endian, meaning the *rightmost* character is qubit 0).
-Julia/PauliPropagation.jl uses 1-indexed qubits with no inherent string-label convention (Pauli
-strings are built explicitly from (symbol, qubit-index) pairs), so gate qubit indices are
-shifted by +1, and observable label characters at 1-based position k (counting from the
-left of an n-character string) map to Julia qubit index n - k + 1.
+Julia side parser for the circuits
 """
 module CircuitIR
 

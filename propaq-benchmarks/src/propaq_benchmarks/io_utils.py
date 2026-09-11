@@ -1,11 +1,5 @@
-"""Shared JSONL checkpoint and npz (de)serialization helpers used across the benchmark suite.
-
-Every backend runner file appends its result records to a JSONL checkpoint file with
-append_jsonl (so a killed run can resume by skipping already-completed records) and
-snapshots the whole checkpoint to a single .npz file with save_records_npz after every
-record.
-The npz snapshot is what every plotting script reads, through load_experiment_results
-below, which merges every backend's results file in an experiment folder into one list.
+"""
+Shared JSONL checkpoint and npz (de)serialization helpers used across benchmarks
 """
 from __future__ import annotations
 
@@ -19,7 +13,6 @@ import numpy as np
 
 
 def append_jsonl(path: str, record: dict[str, Any]) -> None:
-    """Append one record as a line to a checkpoint file, fsync'd so it survives a hard kill."""
     with open(path, "a") as f:
         f.write(json.dumps(record) + "\n")
         f.flush()
@@ -42,19 +35,6 @@ _JSON_KEYS_COLUMN = "__json_keys__"
 
 
 def save_records_npz(records: list[dict[str, Any]], path: str) -> None:
-    """Flatten a list of (possibly heterogeneous) result-record dicts into one .npz file.
-
-    Every key that appears in any record becomes one array, column-major, one entry per
-    record.
-    A key whose values are all booleans becomes a bool array.
-    A key whose values are all numbers becomes a float64 array, with NaN for a record that
-    is missing it.
-    A key whose values are all strings becomes an object array of str, with an empty
-    string for a record that is missing it.
-    Anything else (a dict, a list, or a key with no non-missing value at all) is JSON
-    encoded into a string column instead, so no information is dropped, and the set of
-    JSON-encoded keys is stored alongside so load_records_npz can decode them back.
-    """
     keys = sorted({k for r in records for k in r})
     arrays: dict[str, np.ndarray] = {}
     json_keys: list[str] = []
@@ -98,15 +78,6 @@ def load_records_npz(path: str) -> list[dict[str, Any]]:
 
 
 def load_experiment_results(experiment_dir: str | Path) -> list[dict[str, Any]]:
-    """Merge every backend's results file in one experiment folder into a single list.
-
-    Each run_<backend> file writes results_<backend>.npz (Python backends) or
-    results_<backend>.jsonl (the two Julia-only backends, which have no npz writer). This
-    reads whichever one exists for every backend found in the folder, preferring the .npz
-    when both are present since it is regenerated from the same .jsonl, and concatenates
-    everything into one flat list of records, ready for a plotting script to filter by
-    "backend" and "basis".
-    """
     experiment_dir = Path(experiment_dir)
     records: list[dict[str, Any]] = []
     seen_backends: set[str] = set()
