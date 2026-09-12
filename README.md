@@ -1,6 +1,6 @@
 # propaq-benchmarks
 
-This repo contains code to reproduce benchmarks and experiments from propaq's [paper](arxiv.org/abs/2609.07730). It's organized
+This repo contains code to reproduce benchmarks and experiments from propaq's [paper](https://arxiv.org/abs/2609.07730). It's organized
 into a `propaq-benchmarks` module, which contains code to build and parse circuits across backends, and a set of experiments under `experiments/`.
 Its requirements also pin the versions of the various backends used in the paper.
 
