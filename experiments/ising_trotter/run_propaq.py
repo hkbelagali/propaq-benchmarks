@@ -28,7 +28,7 @@ N_THREADS = 64
 def propagate_pauli(ir: ProblemIR) -> dict:
     from propaq.circuits import PauliCircuit
     from propaq.datatypes import PauliTermSum
-    from propaq.noise import TruncationPolicy
+    from propaq.truncation import TruncationPolicy
     from propaq.propagators import PauliPropagator
 
     circuit = PauliCircuit.from_qiskit(ir.to_qiskit())
@@ -48,7 +48,7 @@ def propagate_pauli(ir: ProblemIR) -> dict:
 def propagate_majorana(ir: ProblemIR) -> dict:
     from propaq.circuits import MajoranaCircuit
     from propaq.datatypes import MajoranaTermSum
-    from propaq.noise import TruncationPolicy
+    from propaq.truncation import TruncationPolicy
     from propaq.propagators import MajoranaPropagator
 
     circuit = MajoranaCircuit.from_qiskit(ir.to_qiskit(), n_modes=2 * ir.n_qubits)
